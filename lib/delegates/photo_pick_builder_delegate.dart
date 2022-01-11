@@ -5,6 +5,8 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/controller/photo_picker_controller.dart';
 import 'package:photo_picker/provider/photo_asset_image_provider.dart';
 import 'package:photo_picker/util/photo_pick_util.dart';
+import 'package:photo_picker/widgets/photo_picker.dart';
+import 'package:photo_picker/widgets/photo_viewer.dart';
 
 abstract class PhotoPickBuilderDelegate {
   PhotoPickBuilderDelegate({
@@ -13,6 +15,7 @@ abstract class PhotoPickBuilderDelegate {
     required this.mainAxisSpacing,
     required this.crossAxisSpacing,
     required this.controller,
+    required this.key,
   }) {
     controller.onInit();
   }
@@ -23,6 +26,7 @@ abstract class PhotoPickBuilderDelegate {
   final double crossAxisSpacing;
 
   final PhotoPickController controller;
+  final GlobalKey<PhotoPickerWidgetState> key;
 
   Widget buildAppbar(BuildContext context);
 
@@ -45,6 +49,8 @@ abstract class PhotoPickBuilderDelegate {
   Widget buildCategoryListItem(BuildContext context, int index);
 
   Widget build(BuildContext context);
+
+  Widget? buildViewerTopWidget(BuildContext context, Function backFunc);
 }
 
 class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
@@ -55,12 +61,14 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
     double crossAxisSpacing = 2,
     int perPageSize = 200,
     PhotoPickController? controller,
+    GlobalKey<PhotoPickerWidgetState>? key,
   }) : super(
           backgroundColor: backgroundColor,
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: crossAxisSpacing,
           mainAxisSpacing: mainAxisSpacing,
           controller: controller ?? PhotoPickController(),
+          key: key ?? GlobalKey(),
         );
 
   @override
@@ -97,7 +105,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         height: double.infinity,
         child: const Icon(
-          Icons.arrow_back_rounded,
+          Icons.close,
           color: Colors.white,
           size: 24,
         ),
@@ -150,7 +158,32 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
 
   @override
   Widget buildBottomPanel(BuildContext context) {
-    return SizedBox.shrink();
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          const Spacer(),
+          TextButton(
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.resolveWith(
+                (states) => const Color(0xFF6A00FF),
+              ),
+            ),
+            onPressed: () {},
+            child: const Text(
+              '确认',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                height: 18 / 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -160,19 +193,24 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
       alignment: Alignment.bottomCenter,
       heightFactor: switching ? 1 : 0,
       curve: Curves.easeInOut,
-      child: Container(
-        color: Colors.black,
-        child: MediaQuery.removePadding(
-          context: context,
-          removeTop: true,
-          removeBottom: true,
-          child: ListView.builder(
-            padding: const EdgeInsets.only(top: 12),
-            itemBuilder: (context, index) {
-              return buildCategoryListItem(context, index);
-            },
-            physics: const BouncingScrollPhysics(),
-            itemCount: controller.assetPathFirstPhotoThumbMap.length,
+      child: AnimatedOpacity(
+        opacity: switching ? 1 : 0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        child: Container(
+          color: Colors.black,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            removeBottom: true,
+            child: ListView.builder(
+              padding: const EdgeInsets.only(top: 12),
+              itemBuilder: (context, index) {
+                return buildCategoryListItem(context, index);
+              },
+              physics: const BouncingScrollPhysics(),
+              itemCount: controller.assetPathFirstPhotoThumbMap.length,
+            ),
           ),
         ),
       ),
@@ -288,79 +326,96 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
 
   @override
   Widget buildListImageItem(BuildContext context, AssetEntity assetEntity) {
-    return Stack(
-      children: [
-        Image(
-          image: PhotoAssetImageProvider(
-            assetEntity,
-            isOriginal: false,
-            thumbSize: [
-              controller.thumbPhotoSize,
-              controller.thumbPhotoSize,
-            ],
+    return GestureDetector(
+      onTap: () {
+        PhotoViewer.openViewer(
+          context: context,
+          controller: controller,
+          currentEntity: assetEntity,
+          currentSelectedChangedListener: (index) {
+            key.currentState?.updateView();
+          },
+          topWidget: (func) => buildViewerTopWidget(context, func),
+          bottomWidget: buildBottomPanel(context),
+        );
+      },
+      child: Stack(
+        children: [
+          Hero(
+            tag: assetEntity.id,
+            child: Image(
+              image: PhotoAssetImageProvider(
+                assetEntity,
+                isOriginal: false,
+                thumbSize: [
+                  controller.thumbPhotoSize,
+                  controller.thumbPhotoSize,
+                ],
+              ),
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+            ),
           ),
-          width: double.infinity,
-          height: double.infinity,
-          fit: BoxFit.cover,
-        ),
-        Positioned.fill(
-          child: ValueListenableBuilder(
-            builder:
-                (BuildContext context, Set<AssetEntity> value, Widget? child) {
-              if (value.contains(assetEntity)) {
-                return Container(
-                  color: const Color(0xFF19194B).withOpacity(0.7),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-            valueListenable: controller.selectedAssetList,
+          Positioned.fill(
+            child: ValueListenableBuilder(
+              builder: (BuildContext context, Set<AssetEntity> value,
+                  Widget? child) {
+                if (value.contains(assetEntity)) {
+                  return Container(
+                    color: const Color(0xFF19194B).withOpacity(0.7),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+              valueListenable: controller.selectedAssetList,
+            ),
           ),
-        ),
-        Positioned(
-          top: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: () {
-              controller.selectAsset(assetEntity);
-            },
-            child: Container(
-              height: 40,
-              width: 40,
-              color: Colors.transparent,
-              alignment: Alignment.topRight,
-              padding: const EdgeInsets.all(4),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF001E32).withOpacity(0.1),
-                      offset: const Offset(1, 1),
-                      blurRadius: 2,
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () {
+                controller.selectAsset(assetEntity);
+              },
+              child: Container(
+                height: 40,
+                width: 40,
+                color: Colors.transparent,
+                alignment: Alignment.topRight,
+                padding: const EdgeInsets.all(4),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF001E32).withOpacity(0.1),
+                        offset: const Offset(1, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(100),
                     ),
-                  ],
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(100),
                   ),
-                ),
-                child: ValueListenableBuilder(
-                  valueListenable: controller.selectedAssetList,
-                  builder: (BuildContext context, Set<AssetEntity> value,
-                      Widget? child) {
-                    return Icon(
-                      value.contains(assetEntity)
-                          ? Icons.check_circle_rounded
-                          : Icons.radio_button_unchecked,
-                      size: 24,
-                      color: Colors.white,
-                    );
-                  },
+                  child: ValueListenableBuilder(
+                    valueListenable: controller.selectedAssetList,
+                    builder: (BuildContext context, Set<AssetEntity> value,
+                        Widget? child) {
+                      return Icon(
+                        value.contains(assetEntity)
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked,
+                        size: 24,
+                        color: Colors.white,
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
     ;
   }
@@ -459,6 +514,11 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
 
   @override
   Widget buildImageItemIndicator(BuildContext context) {
-    return SizedBox.shrink();
+    return const SizedBox.shrink();
+  }
+
+  @override
+  Widget? buildViewerTopWidget(BuildContext context, Function backFunc) {
+    return null;
   }
 }

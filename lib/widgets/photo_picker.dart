@@ -1,3 +1,4 @@
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -13,11 +14,11 @@ class PhotoPickerWidget extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return _PhotoPickerWidgetState();
+    return PhotoPickerWidgetState();
   }
 }
 
-class _PhotoPickerWidgetState extends State<PhotoPickerWidget>
+class PhotoPickerWidgetState extends State<PhotoPickerWidget>
     with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
@@ -38,6 +39,7 @@ class _PhotoPickerWidgetState extends State<PhotoPickerWidget>
     WidgetsBinding.instance?.removeObserver(this);
     PhotoManager.removeChangeCallback(_photoChangedListener);
     PhotoManager.stopChangeNotify();
+    clearMemoryImageCache();
     super.dispose();
   }
 
@@ -52,5 +54,9 @@ class _PhotoPickerWidgetState extends State<PhotoPickerWidget>
   /// 相册的图片变化了
   void _photoChangedListener([MethodCall? methodCall]) async {
     widget.builderDelegate.controller.onPhotoChangeListener();
+  }
+
+  void updateView() {
+    setState(() {});
   }
 }
