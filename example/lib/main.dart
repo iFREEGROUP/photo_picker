@@ -33,7 +33,10 @@ class _MyTestState extends State<_MyTestPage> {
       ),
       body: Center(
         child: GestureDetector(
-          child: const Text('Running'),
+          child: const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text('获取图片'),
+          ),
           onTap: () {
             PhotoPicker.pick(context: context);
           },

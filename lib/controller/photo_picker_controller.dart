@@ -36,7 +36,7 @@ class PhotoPickController {
   final ValueNotifier<bool> disableClickListener = ValueNotifier(false);
 
   void onInit() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(config.pageTransitionDuration);
     await checkPhotoPermission();
     if (isPhotoPermissionGrant) {
       await getAssetsPathList();
@@ -56,7 +56,31 @@ class PhotoPickController {
   }
 
   Future<void> getAssetsPathList() async {
-    final pathList = await PhotoManager.getAssetPathList();
+    final FilterOptionGroup options = FilterOptionGroup(
+      imageOption: const FilterOption(
+        needTitle: true,
+        sizeConstraint: SizeConstraint(ignoreSize: true),
+      ),
+      audioOption: const FilterOption(
+        needTitle: true,
+        sizeConstraint: SizeConstraint(ignoreSize: true),
+      ),
+      containsPathModified: true,
+    );
+
+    if (config.filterOption != null) {
+      options.merge(config.filterOption!);
+    }
+    final pathList = await PhotoManager.getAssetPathList(
+      hasAll: config.hasAll,
+      onlyAll: config.onlyAll,
+      type: config.requestType,
+      filterOption: config.filterOption,
+    );
+
+    // 排序并过滤
+    config.getPhotoSortPathDelegate.sort(pathList);
+
     if (pathList.isNotEmpty) {
       switchAssetPath(pathList.first);
       _cacheFirstThumbFromPathEntity(pathList);
@@ -74,7 +98,6 @@ class PhotoPickController {
       return;
     }
     assetEntityList.value = null;
-    await Future.delayed(const Duration(milliseconds: 50));
     final dataList =
         await pathNotifier.value!.getAssetListPaged(0, config.perPageSize);
     assetEntityList.value = dataList;
@@ -134,6 +157,7 @@ class PhotoPickController {
     getPathAssetsList();
   }
 
+  /// 选择资源
   void selectAsset(AssetEntity assetEntity) {
     final oldList = selectedAssetList.value;
     if (oldList.contains(assetEntity)) {

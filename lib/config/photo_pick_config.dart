@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/delegates/photo_rename_delegate.dart';
+import 'package:photo_picker/delegates/photo_sort_path_delegate.dart';
 
 class PhotoPickerConfig {
   PhotoPickerConfig({
@@ -12,18 +14,66 @@ class PhotoPickerConfig {
     this.maxSelectedCount = 9,
     this.disableCoverColor,
     this.selectedCoverColor,
+    this.requestType = RequestType.common,
+    this.hasAll = true,
+    this.onlyAll = false,
+    this.filterOption,
+    this.photoNameDelegate,
+    this.photoSortPathDelegate,
+    this.canPreview = true,
+    this.pageTransitionCurves = Curves.easeIn,
+    this.pageTransitionDuration = const Duration(milliseconds: 300),
   });
 
-  static PhotoNameDelegate photoNameDelegate =
-      PhotoNameDelegate.defaultPhotoNameDelegate;
+  final PhotoNameDelegate? photoNameDelegate;
+  final SortPathDelegate? photoSortPathDelegate;
 
+  /// 整个布局的背景颜色
   final Color backgroundColor;
+
+  /// 一行显示多少
   final int crossAxisCount;
+
+  /// 主轴方向的间距
   final double mainAxisSpacing;
+
+  /// 副轴方向的间距
   final double crossAxisSpacing;
+
+  /// 分页加载时每页请求多少长图片
   final int perPageSize;
+
+  /// 显示的缩略图大小
   final int thumbPhotoSize;
+
+  /// 最大可选的数量
   final int maxSelectedCount;
+
+  /// 选择上限后的图片蒙板颜色
   final Color? disableCoverColor;
+
+  /// 选中图片所覆盖的颜色
   final Color? selectedCoverColor;
+
+  /// 请求图片的类型，如图片、视频、音频等
+  final RequestType requestType;
+
+  /// see [PhotoManager.getAssetPathList]
+  final bool hasAll;
+  final bool onlyAll;
+  final FilterOptionGroup? filterOption;
+
+  /// 是否可以预览
+  final bool canPreview;
+
+  final Curve pageTransitionCurves;
+  final Duration pageTransitionDuration;
+
+  /// 重命名目录的代理
+  PhotoNameDelegate get getPhotoNameDelegate =>
+      photoNameDelegate ?? PhotoNameDelegate.defaultPhotoNameDelegate;
+
+  /// 排序目录的代理，可操作删除等
+  SortPathDelegate get getPhotoSortPathDelegate =>
+      photoSortPathDelegate ?? SortPathDelegate.defaultDelegate;
 }

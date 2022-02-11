@@ -1,59 +1,74 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/config/photo_pick_config.dart';
 import 'package:photo_picker/controller/photo_picker_controller.dart';
 import 'package:photo_picker/provider/photo_asset_image_provider.dart';
-import 'package:photo_picker/widgets/photo_picker.dart';
 import 'package:photo_picker/widgets/photo_viewer.dart';
 
 abstract class PhotoPickBuilderDelegate {
   PhotoPickBuilderDelegate({
     required this.config,
-    required this.controller,
-    required this.key,
-  }) {
-    controller.onInit();
-  }
+  });
 
-  final PhotoPickController controller;
-  final GlobalKey<PhotoPickerWidgetState> key;
+  /// 业务控制器
+  late final PhotoPickController controller =
+      PhotoPickController(config: config)..onInit();
+
   final PhotoPickerConfig config;
 
+  /// 标题栏整个布局
   Widget buildAppbar(BuildContext context);
 
+  /// 返回按钮
   Widget buildBack(BuildContext context);
 
+  /// 顶部当前的目录
   Widget buildCurrentCategory(BuildContext context);
 
+  /// 中间内容的列表布局
   Widget buildBodyList(BuildContext context);
 
+  /// 没有权限时的布局
   Widget buildNoPhotoPermission(BuildContext context);
 
+  /// 列表图片的子布局
   Widget buildListImageItem(BuildContext context, AssetEntity assetEntity);
 
-  Widget buildImageItemIndicator(BuildContext context);
+  /// 列表图片右上角的指示器
+  Widget buildImageItemIndicator(BuildContext context, AssetEntity assetEntity);
 
+  /// 当选择图片数量等于[PhotoPickerConfig.maxSelectedCount]时，剩余的图片会覆盖一层颜色
+  Widget buildImageItemDisableCover(BuildContext context, AssetEntity entity);
+
+  /// 当选中图片后，会覆盖一层颜色
+  Widget buildImageItemSelectedCover(BuildContext context, AssetEntity entity);
+
+  /// 底部布局，可用于显示所选的图片
   Widget buildBottomPanel(BuildContext context);
 
+  /// 选择目录列表布局
   Widget buildCategoryList(BuildContext context, bool switching);
 
+  /// 选择目录列表的子布局
   Widget buildCategoryListItem(BuildContext context, int index);
 
+  /// 你懂的，入口
   Widget build(BuildContext context);
 
-  Widget? buildViewerTopWidget(BuildContext context, Function backFunc);
+  /// 查看图片顶部的布局
+  Widget? buildViewerTopWidget(
+    BuildContext context,
+    Function backFunc,
+    Function selectFunc,
+  );
 }
 
 class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   DefaultPhotoPickerBuilder({
-    PhotoPickerConfig? config,
-    PhotoPickController? controller,
-    GlobalKey<PhotoPickerWidgetState>? key,
-  }) : super(
-          config: config ??= PhotoPickerConfig(),
-          controller: controller ?? PhotoPickController(config: config),
-          key: key ?? GlobalKey(),
-        );
+    required PhotoPickerConfig config,
+  }) : super(config: config);
 
   @override
   Widget buildAppbar(BuildContext context) {
@@ -231,13 +246,16 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             const SizedBox(
               width: 16,
             ),
-            Text(
-              PhotoPickerConfig.photoNameDelegate.rename(context, path.name),
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                height: 20 / 14,
+            Flexible(
+              child: Text(
+                config.getPhotoNameDelegate.rename(context, path.name),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  height: 20 / 14,
+                ),
+                maxLines: 2,
               ),
             ),
             const SizedBox(
@@ -270,37 +288,42 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
           onTap: () {
             controller.switchingPath.value = !controller.switchingPath.value;
           },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                PhotoPickerConfig.photoNameDelegate.rename(context, value.name),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  height: 20 / 14,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(
-                width: 4,
-              ),
-              ValueListenableBuilder(
-                valueListenable: controller.switchingPath,
-                builder: (BuildContext context, bool value, Widget? child) {
-                  return AnimatedRotation(
-                    alignment: Alignment.center,
-                    duration: const Duration(milliseconds: 200),
-                    turns: value ? 0 : 0.5,
-                    child: const Icon(
-                      Icons.arrow_drop_up_sharp,
-                      size: 24,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 100),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    config.getPhotoNameDelegate.rename(context, value.name),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      height: 20 / 14,
                       color: Colors.white,
                     ),
-                  );
-                },
-              ),
-            ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(
+                  width: 4,
+                ),
+                ValueListenableBuilder(
+                  valueListenable: controller.switchingPath,
+                  builder: (BuildContext context, bool value, Widget? child) {
+                    return Transform.rotate(
+                      angle: value ? pi / 180 : pi,
+                      child: const Icon(
+                        Icons.arrow_drop_up_sharp,
+                        size: 24,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -315,14 +338,16 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             !controller.selectedAssetList.value.contains(assetEntity)) {
           return;
         }
+        if (!config.canPreview) return;
         PhotoViewer.openViewer(
           context: context,
           controller: controller,
           currentEntity: assetEntity,
-          currentSelectedChangedListener: (index) {
-            key.currentState?.updateView();
-          },
-          topWidget: (func) => buildViewerTopWidget(context, func),
+          topWidget: (backFunc, selectFunc) => buildViewerTopWidget(
+            context,
+            backFunc,
+            selectFunc,
+          ),
           bottomWidget: buildBottomPanel(context),
         );
       },
@@ -345,82 +370,19 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             ),
           ),
           Positioned.fill(
-            child: ValueListenableBuilder(
-              builder: (context, Set<AssetEntity> value, Widget? child) {
-                if (value.contains(assetEntity)) {
-                  return Container(
-                    color: config.selectedCoverColor ??
-                        const Color(0xFF19194B).withOpacity(0.7),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-              valueListenable: controller.selectedAssetList,
-            ),
+            child: buildImageItemSelectedCover(context, assetEntity),
           ),
           Positioned(
             top: 0,
             right: 0,
-            child: GestureDetector(
-              onTap: () {
-                controller.selectAsset(assetEntity);
-              },
-              child: Container(
-                height: 40,
-                width: 40,
-                color: Colors.transparent,
-                alignment: Alignment.topRight,
-                padding: const EdgeInsets.all(4),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF001E32).withOpacity(0.1),
-                        offset: const Offset(1, 1),
-                        blurRadius: 2,
-                      ),
-                    ],
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(100),
-                    ),
-                  ),
-                  child: ValueListenableBuilder(
-                    valueListenable: controller.selectedAssetList,
-                    builder: (context, Set<AssetEntity> value, Widget? child) {
-                      return Icon(
-                        value.contains(assetEntity)
-                            ? Icons.check_circle_rounded
-                            : Icons.radio_button_unchecked,
-                        size: 24,
-                        color: Colors.white,
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
+            child: buildImageItemIndicator(context, assetEntity),
           ),
           Positioned.fill(
-            child: ValueListenableBuilder(
-              builder: (context, bool value, Widget? child) {
-                if (!value) {
-                  return const SizedBox.shrink();
-                }
-                if (!controller.selectedAssetList.value.contains(assetEntity)) {
-                  return Container(
-                    color: config.disableCoverColor ??
-                        Colors.black.withOpacity(0.8),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-              valueListenable: controller.disableClickListener,
-            ),
+            child: buildImageItemDisableCover(context, assetEntity),
           ),
         ],
       ),
     );
-    ;
   }
 
   @override
@@ -516,12 +478,88 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   @override
-  Widget buildImageItemIndicator(BuildContext context) {
-    return const SizedBox.shrink();
+  Widget buildImageItemIndicator(
+      BuildContext context, AssetEntity assetEntity) {
+    return GestureDetector(
+      onTap: () {
+        controller.selectAsset(assetEntity);
+      },
+      child: Container(
+        height: 40,
+        width: 40,
+        color: Colors.transparent,
+        alignment: Alignment.topRight,
+        padding: const EdgeInsets.all(4),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF001E32).withOpacity(0.1),
+                offset: const Offset(1, 1),
+                blurRadius: 2,
+              ),
+            ],
+            borderRadius: const BorderRadius.all(
+              Radius.circular(100),
+            ),
+          ),
+          child: ValueListenableBuilder(
+            valueListenable: controller.selectedAssetList,
+            builder: (context, Set<AssetEntity> value, Widget? child) {
+              return Icon(
+                value.contains(assetEntity)
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked,
+                size: 24,
+                color: Colors.white,
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   @override
-  Widget? buildViewerTopWidget(BuildContext context, Function backFunc) {
+  Widget? buildViewerTopWidget(
+    BuildContext context,
+    Function backFunc,
+    Function selectFunc,
+  ) {
     return null;
+  }
+
+  @override
+  Widget buildImageItemDisableCover(BuildContext context, AssetEntity entity) {
+    return ValueListenableBuilder(
+      builder: (context, bool value, Widget? child) {
+        if (!value) {
+          return const SizedBox.shrink();
+        }
+        if (!controller.selectedAssetList.value.contains(entity)) {
+          return Container(
+            color: config.disableCoverColor ?? Colors.black.withOpacity(0.8),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+      valueListenable: controller.disableClickListener,
+    );
+  }
+
+  @override
+  Widget buildImageItemSelectedCover(BuildContext context, AssetEntity entity) {
+    return ValueListenableBuilder(
+      builder: (context, Set<AssetEntity> value, Widget? child) {
+        if (value.contains(entity)) {
+          return Container(
+            color: config.selectedCoverColor ??
+                const Color(0xFF19194B).withOpacity(0.7),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+      valueListenable: controller.selectedAssetList,
+    );
   }
 }

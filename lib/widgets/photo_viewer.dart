@@ -19,7 +19,10 @@ class PhotoViewer extends StatefulWidget {
 
   final AssetEntity currentEntity;
   final PhotoPickController controller;
-  final Widget? Function(Function clickBackListener)? topWidget;
+  final Widget? Function(
+    Function clickBackListener,
+    Function clickSelectListener,
+  )? topWidget;
   final Widget? bottomWidget;
   final Color backgroundColor;
   final Function(int index)? currentSelectedChangedListener;
@@ -33,7 +36,11 @@ class PhotoViewer extends StatefulWidget {
     required BuildContext context,
     required PhotoPickController controller,
     required AssetEntity currentEntity,
-    Widget? Function(Function clickBackListener)? topWidget,
+    Widget? Function(
+      Function clickBackListener,
+      Function clickSelectListener,
+    )?
+        topWidget,
     Widget? bottomWidget,
     Color? backgroundColor,
     Function(int index)? currentSelectedChangedListener,
@@ -149,7 +156,11 @@ class _PhotoViewState extends State<PhotoViewer>
 
   Widget _buildTopWidget(
     BuildContext context,
-    Widget? Function(Function clickBackListener)? topWidget,
+    Widget? Function(
+      Function clickBackListener,
+      Function selectedListener,
+    )?
+        topWidget,
   ) {
     final statusBarHeight = MediaQuery.of(context).padding.top;
     return ValueListenableBuilder(
@@ -166,6 +177,8 @@ class _PhotoViewState extends State<PhotoViewer>
             slidePageKey.currentState?.popPage();
             _jump2OriginPosition();
             Navigator.of(context).maybePop();
+          }, () {
+            widget.controller.selectAsset(currentEntity);
           }) ??
           Container(
             height: kToolbarHeight + statusBarHeight,

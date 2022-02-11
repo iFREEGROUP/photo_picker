@@ -55,8 +55,4 @@ class PhotoPickerWidgetState extends State<PhotoPickerWidget>
   void _photoChangedListener([MethodCall? methodCall]) async {
     widget.builderDelegate.controller.onPhotoChangeListener();
   }
-
-  void updateView() {
-    setState(() {});
-  }
 }
