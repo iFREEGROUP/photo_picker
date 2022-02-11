@@ -2,18 +2,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:photo_picker/config/photo_pick_config.dart';
 
 class PhotoPickController {
-  PhotoPickController({
-    this.perPageSize = 200,
-    this.thumbPhotoSize = 200,
-  });
+  PhotoPickController({required this.config});
 
   /// 相册分页请求数据时每页的数量
-  final int perPageSize;
-
-  /// 缩略图的宽高大小
-  final int thumbPhotoSize;
+  final PhotoPickerConfig config;
 
   /// 当前选择的路径
   ValueNotifier<AssetPathEntity?> pathNotifier = ValueNotifier(null);
@@ -36,6 +31,9 @@ class PhotoPickController {
 
   /// 已选的列表
   final ValueNotifier<Set<AssetEntity>> selectedAssetList = ValueNotifier({});
+
+  /// 禁止点击事件
+  final ValueNotifier<bool> disableClickListener = ValueNotifier(false);
 
   void onInit() async {
     await Future.delayed(const Duration(milliseconds: 300));
@@ -75,8 +73,10 @@ class PhotoPickController {
     if (pathNotifier.value == null) {
       return;
     }
+    assetEntityList.value = null;
+    await Future.delayed(const Duration(milliseconds: 50));
     final dataList =
-        await pathNotifier.value!.getAssetListPaged(0, perPageSize);
+        await pathNotifier.value!.getAssetListPaged(0, config.perPageSize);
     assetEntityList.value = dataList;
   }
 
@@ -97,7 +97,7 @@ class PhotoPickController {
 
   /// 当前的加载的页面
   int get currentAssetsListPage =>
-      (max(1, currentPathAssetsLength) / perPageSize).ceil();
+      (max(1, currentPathAssetsLength) / config.perPageSize).ceil();
 
   /// 加载更多的照片
   void loadMoreAssetData(int currentIndex, int crossAxisCount) async {
@@ -106,7 +106,7 @@ class PhotoPickController {
     if (loadMore && hasLoadMore) {
       final dataList = await pathNotifier.value!.getAssetListPaged(
         currentAssetsListPage,
-        perPageSize,
+        config.perPageSize,
       );
       final oldData = assetEntityList.value ?? [];
       assetEntityList.value = [...oldData, ...dataList];
@@ -130,6 +130,7 @@ class PhotoPickController {
         pathNotifier.value?.assetCount == entity.assetCount) return;
     pathNotifier.value = entity;
     _currentPathTotalItemCount = entity.assetCount;
+    switchingPath.value = false;
     getPathAssetsList();
   }
 
@@ -138,8 +139,15 @@ class PhotoPickController {
     if (oldList.contains(assetEntity)) {
       oldList.remove(assetEntity);
       selectedAssetList.value = <AssetEntity>{...oldList};
+      if (disableClickListener.value) {
+        disableClickListener.value = false;
+      }
     } else {
+      if (selectedAssetList.value.length >= config.maxSelectedCount) return;
       selectedAssetList.value = <AssetEntity>{...oldList}..add(assetEntity);
+      if (selectedAssetList.value.length == config.maxSelectedCount) {
+        disableClickListener.value = true;
+      }
     }
   }
 }

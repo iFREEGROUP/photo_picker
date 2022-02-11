@@ -1,32 +1,23 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:photo_picker/config/photo_pick_config.dart';
 import 'package:photo_picker/controller/photo_picker_controller.dart';
 import 'package:photo_picker/provider/photo_asset_image_provider.dart';
-import 'package:photo_picker/util/photo_pick_util.dart';
 import 'package:photo_picker/widgets/photo_picker.dart';
 import 'package:photo_picker/widgets/photo_viewer.dart';
 
 abstract class PhotoPickBuilderDelegate {
   PhotoPickBuilderDelegate({
-    required this.backgroundColor,
-    required this.crossAxisCount,
-    required this.mainAxisSpacing,
-    required this.crossAxisSpacing,
+    required this.config,
     required this.controller,
     required this.key,
   }) {
     controller.onInit();
   }
 
-  final Color backgroundColor;
-  final int crossAxisCount;
-  final double mainAxisSpacing;
-  final double crossAxisSpacing;
-
   final PhotoPickController controller;
   final GlobalKey<PhotoPickerWidgetState> key;
+  final PhotoPickerConfig config;
 
   Widget buildAppbar(BuildContext context);
 
@@ -55,19 +46,12 @@ abstract class PhotoPickBuilderDelegate {
 
 class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   DefaultPhotoPickerBuilder({
-    Color backgroundColor = Colors.black,
-    int crossAxisCount = 4,
-    double mainAxisSpacing = 2,
-    double crossAxisSpacing = 2,
-    int perPageSize = 200,
+    PhotoPickerConfig? config,
     PhotoPickController? controller,
     GlobalKey<PhotoPickerWidgetState>? key,
   }) : super(
-          backgroundColor: backgroundColor,
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: crossAxisSpacing,
-          mainAxisSpacing: mainAxisSpacing,
-          controller: controller ?? PhotoPickController(),
+          config: config ??= PhotoPickerConfig(),
+          controller: controller ?? PhotoPickController(config: config),
           key: key ?? GlobalKey(),
         );
 
@@ -138,12 +122,12 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
           context: context,
           child: GridView.builder(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              mainAxisSpacing: mainAxisSpacing,
-              crossAxisSpacing: crossAxisSpacing,
+              crossAxisCount: config.crossAxisCount,
+              mainAxisSpacing: config.mainAxisSpacing,
+              crossAxisSpacing: config.crossAxisSpacing,
             ),
             itemBuilder: (context, index) {
-              controller.loadMoreAssetData(index, crossAxisCount);
+              controller.loadMoreAssetData(index, config.crossAxisCount);
               final item = value[index];
               return buildListImageItem(context, item);
             },
@@ -224,7 +208,6 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
     return GestureDetector(
       onTap: () {
         controller.switchAssetPath(path);
-        controller.switchingPath.value = false;
       },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
@@ -237,8 +220,8 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 data,
                 isOriginal: false,
                 thumbSize: [
-                  controller.thumbPhotoSize,
-                  controller.thumbPhotoSize,
+                  config.thumbPhotoSize,
+                  config.thumbPhotoSize,
                 ],
               ),
               width: 60,
@@ -249,7 +232,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
               width: 16,
             ),
             Text(
-              PhotoPickerUtil.photoNameDelegate.rename(context, path.name),
+              PhotoPickerConfig.photoNameDelegate.rename(context, path.name),
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -291,7 +274,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                PhotoPickerUtil.photoNameDelegate.rename(context, value.name),
+                PhotoPickerConfig.photoNameDelegate.rename(context, value.name),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -328,6 +311,10 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   Widget buildListImageItem(BuildContext context, AssetEntity assetEntity) {
     return GestureDetector(
       onTap: () {
+        if (controller.disableClickListener.value &&
+            !controller.selectedAssetList.value.contains(assetEntity)) {
+          return;
+        }
         PhotoViewer.openViewer(
           context: context,
           controller: controller,
@@ -348,8 +335,8 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 assetEntity,
                 isOriginal: false,
                 thumbSize: [
-                  controller.thumbPhotoSize,
-                  controller.thumbPhotoSize,
+                  config.thumbPhotoSize,
+                  config.thumbPhotoSize,
                 ],
               ),
               width: double.infinity,
@@ -359,11 +346,11 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
           ),
           Positioned.fill(
             child: ValueListenableBuilder(
-              builder: (BuildContext context, Set<AssetEntity> value,
-                  Widget? child) {
+              builder: (context, Set<AssetEntity> value, Widget? child) {
                 if (value.contains(assetEntity)) {
                   return Container(
-                    color: const Color(0xFF19194B).withOpacity(0.7),
+                    color: config.selectedCoverColor ??
+                        const Color(0xFF19194B).withOpacity(0.7),
                   );
                 }
                 return const SizedBox.shrink();
@@ -399,8 +386,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                   ),
                   child: ValueListenableBuilder(
                     valueListenable: controller.selectedAssetList,
-                    builder: (BuildContext context, Set<AssetEntity> value,
-                        Widget? child) {
+                    builder: (context, Set<AssetEntity> value, Widget? child) {
                       return Icon(
                         value.contains(assetEntity)
                             ? Icons.check_circle_rounded
@@ -412,6 +398,23 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                   ),
                 ),
               ),
+            ),
+          ),
+          Positioned.fill(
+            child: ValueListenableBuilder(
+              builder: (context, bool value, Widget? child) {
+                if (!value) {
+                  return const SizedBox.shrink();
+                }
+                if (!controller.selectedAssetList.value.contains(assetEntity)) {
+                  return Container(
+                    color: config.disableCoverColor ??
+                        Colors.black.withOpacity(0.8),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+              valueListenable: controller.disableClickListener,
             ),
           ),
         ],
@@ -465,7 +468,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: config.backgroundColor,
       body: Stack(
         children: [
           Positioned.fill(
