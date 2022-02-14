@@ -246,8 +246,9 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
 
   @override
   Widget buildCategoryListItem(BuildContext context, int index) {
-    final path = controller.assetPathFirstPhotoThumbMap.keys.toList()[index];
-    final data = controller.assetPathFirstPhotoThumbMap[path]!;
+    final entries = controller.assetPathFirstPhotoThumbMap[index];
+    final path = entries[0];
+    final data = entries[1];
     return GestureDetector(
       onTap: () {
         controller.switchAssetPath(path);
@@ -258,19 +259,14 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
         color: Colors.transparent,
         child: Row(
           children: [
-            Image(
-              image: PhotoAssetImageProvider(
-                data,
-                isOriginal: false,
-                thumbSize: [
-                  config.thumbPhotoSize,
-                  config.thumbPhotoSize,
-                ],
-              ),
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-            ),
+            data == null
+                ? const SizedBox.shrink()
+                : Image.memory(
+                    data,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                  ),
             const SizedBox(
               width: 16,
             ),

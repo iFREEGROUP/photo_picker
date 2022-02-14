@@ -27,7 +27,7 @@ class PhotoPickController {
   int _currentPathTotalItemCount = 0;
 
   /// 存放所有目录下的第一张缩略图数据
-  final Map<AssetPathEntity, AssetEntity> assetPathFirstPhotoThumbMap = {};
+  final List<List<dynamic>> assetPathFirstPhotoThumbMap = [];
 
   /// 已选的列表
   final ValueNotifier<Set<AssetEntity>> selectedAssetList = ValueNotifier({});
@@ -104,11 +104,13 @@ class PhotoPickController {
   }
 
   /// 照片发生变更事件，包括没权限从设置页面返回，都会回调这个方法
-  void onPhotoChangeListener() async {
+  void onPhotoChangeListener({bool update = true}) async {
     await checkPhotoPermission();
     if (!isPhotoPermissionGrant) return;
     if (pathNotifier.value != null) {
-      pathNotifier.value!.refreshPathProperties();
+      if (update) {
+        await pathNotifier.value!.refreshPathProperties();
+      }
     } else {
       await getAssetsPathList();
       await getPathAssetsList();
@@ -140,10 +142,11 @@ class PhotoPickController {
   void _cacheFirstThumbFromPathEntity(
     List<AssetPathEntity> pathEntity,
   ) async {
+    assetPathFirstPhotoThumbMap.clear();
     for (var element in pathEntity) {
       final assetList = await element.getAssetListRange(start: 0, end: 1);
-      final asset = assetList.elementAt(0);
-      assetPathFirstPhotoThumbMap[element] = asset;
+      final asset = await assetList.elementAt(0).thumbData;
+      assetPathFirstPhotoThumbMap.add([element, asset]);
     }
   }
 

@@ -47,7 +47,7 @@ class PhotoPickerWidgetState extends State<PhotoPickerWidget>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      widget.builderDelegate.controller.onPhotoChangeListener();
+      widget.builderDelegate.controller.onPhotoChangeListener(update: false);
     }
   }
 
