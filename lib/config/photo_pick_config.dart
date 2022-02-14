@@ -23,6 +23,7 @@ class PhotoPickerConfig {
     this.canPreview = true,
     this.pageTransitionCurves = Curves.easeIn,
     this.pageTransitionDuration = const Duration(milliseconds: 300),
+    this.onlyShowPreviewBottomPanel = false,
   });
 
   final PhotoNameDelegate? photoNameDelegate;
@@ -68,6 +69,9 @@ class PhotoPickerConfig {
 
   final Curve pageTransitionCurves;
   final Duration pageTransitionDuration;
+
+  /// 只显示预览时底部的容器，在主页不显示
+  final bool onlyShowPreviewBottomPanel;
 
   /// 重命名目录的代理
   PhotoNameDelegate get getPhotoNameDelegate =>

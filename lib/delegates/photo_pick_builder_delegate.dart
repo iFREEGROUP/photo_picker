@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/config/photo_pick_config.dart';
@@ -48,6 +49,9 @@ abstract class PhotoPickBuilderDelegate {
   /// 底部布局，可用于显示所选的图片
   Widget buildBottomPanel(BuildContext context);
 
+  /// 如果返回值不为空，则主页的底部使用该布局显示，否则使用[buildBottomPanel]显示
+  Widget? buildRootBottomPanel(BuildContext context);
+
   /// 选择目录列表布局
   Widget buildCategoryList(BuildContext context, bool switching);
 
@@ -63,6 +67,12 @@ abstract class PhotoPickBuilderDelegate {
     Function backFunc,
     Function selectFunc,
   );
+
+  /// 底部所选图片列表
+  Widget buildBottomPanelList(BuildContext context, Set<AssetEntity> value);
+
+  /// 底部所选图片列表子布局
+  Widget buildBottomPanelListItem(BuildContext context, AssetEntity item);
 }
 
 class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
@@ -157,31 +167,49 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
 
   @override
   Widget buildBottomPanel(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          const Spacer(),
-          TextButton(
-            style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.resolveWith(
-                (states) => const Color(0xFF6A00FF),
+    return ValueListenableBuilder(
+      valueListenable: controller.selectedAssetList,
+      builder: (context, Set<AssetEntity> value, Widget? child) {
+        return AnimatedContainer(
+          color: Colors.black,
+          height: value.isEmpty ? 0 : 116,
+          duration: const Duration(milliseconds: 200),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const SizedBox(height: 4),
+              UnconstrainedBox(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context)
+                        .pop(controller.selectedAssetList.value);
+                  },
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: const BoxDecoration(
+                      color: Colors.deepPurple,
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '确定(${value.length}/${config.maxSelectedCount})',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-            onPressed: () {},
-            child: const Text(
-              '确认',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                height: 18 / 12,
-              ),
-            ),
+              Expanded(child: buildBottomPanelList(context, value)),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -391,7 +419,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text(
-          '请允许EXPING使用你的相册权限',
+          '请允许使用你的相册权限',
           style: TextStyle(
             fontWeight: FontWeight.w400,
             fontSize: 14,
@@ -459,7 +487,10 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 child: Column(
                   children: [
                     Expanded(child: buildBodyList(context)),
-                    buildBottomPanel(context),
+                    config.onlyShowPreviewBottomPanel
+                        ? const SizedBox.shrink()
+                        : buildRootBottomPanel(context) ??
+                            buildBottomPanel(context),
                   ],
                 ),
               ),
@@ -561,5 +592,78 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
       },
       valueListenable: controller.selectedAssetList,
     );
+  }
+
+  @override
+  Widget buildBottomPanelList(BuildContext context, Set<AssetEntity> value) {
+    return ListView.builder(
+      itemBuilder: (context, index) {
+        return buildBottomPanelListItem(context, value.elementAt(index));
+      },
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      physics: const BouncingScrollPhysics(),
+      itemCount: value.length,
+    );
+  }
+
+  @override
+  Widget buildBottomPanelListItem(BuildContext context, AssetEntity item) {
+    return GestureDetector(
+      onTap: () {
+        if (!config.canPreview) return;
+        PhotoViewer.openViewer(
+          context: context,
+          controller: controller,
+          currentEntity: item,
+          topWidget: (backFunc, selectFunc) => buildViewerTopWidget(
+            context,
+            backFunc,
+            selectFunc,
+          ),
+          bottomWidget: buildBottomPanel(context),
+        );
+      },
+      child: Stack(
+        children: [
+          Align(
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: ExtendedImage(
+                image: PhotoAssetImageProvider(item, isOriginal: false),
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Positioned.fill(
+            top: -40,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () {
+                  controller.selectAsset(item);
+                },
+                child: const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget? buildRootBottomPanel(BuildContext context) {
+    return null;
   }
 }
