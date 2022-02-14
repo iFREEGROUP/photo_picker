@@ -75,7 +75,7 @@ class PhotoPickController {
       hasAll: config.hasAll,
       onlyAll: config.onlyAll,
       type: config.requestType,
-      filterOption: config.filterOption,
+      filterOption: options,
     );
 
     // 排序并过滤

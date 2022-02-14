@@ -14,7 +14,7 @@ class PhotoPickerConfig {
     this.maxSelectedCount = 9,
     this.disableCoverColor,
     this.selectedCoverColor,
-    this.requestType = RequestType.common,
+    this.requestType = RequestType.image,
     this.hasAll = true,
     this.onlyAll = false,
     this.filterOption,

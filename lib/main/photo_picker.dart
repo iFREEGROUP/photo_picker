@@ -11,6 +11,9 @@ class PhotoPicker {
     PhotoPickerConfig? config,
   }) async {
     config ??= PhotoPickerConfig(requestType: RequestType.image);
+    if (config.requestType != RequestType.image) {
+      throw Exception('目前只支持选择图片，后续开放其他格式的选项');
+    }
     Navigator.of(context).push(
       BottomUpPageRoute(
         builder: PhotoPickerWidget(

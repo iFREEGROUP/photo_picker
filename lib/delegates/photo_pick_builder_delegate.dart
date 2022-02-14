@@ -46,6 +46,8 @@ abstract class PhotoPickBuilderDelegate {
   /// 当选中图片后，会覆盖一层颜色
   Widget buildImageItemSelectedCover(BuildContext context, AssetEntity entity);
 
+  Widget buildVideoItemIndicator(BuildContext context, AssetEntity entity);
+
   /// 底部布局，可用于显示所选的图片
   Widget buildBottomPanel(BuildContext context);
 
@@ -362,7 +364,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             !controller.selectedAssetList.value.contains(assetEntity)) {
           return;
         }
-        if (!config.canPreview) return;
+        if (!config.canPreview || assetEntity.type != AssetType.image) return;
         PhotoViewer.openViewer(
           context: context,
           controller: controller,
@@ -400,6 +402,10 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             top: 0,
             right: 0,
             child: buildImageItemIndicator(context, assetEntity),
+          ),
+          Positioned(
+            bottom: 0,
+            child: buildVideoItemIndicator(context, assetEntity),
           ),
           Positioned.fill(
             child: buildImageItemDisableCover(context, assetEntity),
@@ -607,7 +613,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   Widget buildBottomPanelListItem(BuildContext context, AssetEntity item) {
     return GestureDetector(
       onTap: () {
-        if (!config.canPreview) return;
+        if (!config.canPreview || item.type != AssetType.image) return;
         PhotoViewer.openViewer(
           context: context,
           controller: controller,
@@ -661,5 +667,48 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   @override
   Widget? buildRootBottomPanel(BuildContext context) {
     return null;
+  }
+
+  @override
+  Widget buildVideoItemIndicator(BuildContext context, AssetEntity entity) {
+    if (entity.type == AssetType.video) {
+      return Container(
+        margin: const EdgeInsets.all(4),
+        decoration: const BoxDecoration(boxShadow: [
+          BoxShadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 20)
+        ]),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.videocam_rounded,
+              size: 20,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _durationIndicatorBuilder(Duration(seconds: entity.duration)),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 1.2,
+                color: Colors.white,
+              ),
+            )
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  String _durationIndicatorBuilder(Duration duration) {
+    const String separator = ':';
+    final String minute = duration.inMinutes.toString().padLeft(2, '0');
+    final String second =
+        ((duration - Duration(minutes: duration.inMinutes)).inSeconds)
+            .toString()
+            .padLeft(2, '0');
+    return '$minute$separator$second';
   }
 }
