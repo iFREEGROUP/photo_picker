@@ -27,10 +27,10 @@ abstract class PhotoPickBuilderDelegate {
   Widget buildBack(BuildContext context);
 
   /// 顶部当前的目录
-  Widget buildCurrentCategory(BuildContext context);
+  Widget buildCurrentPath(BuildContext context);
 
   /// 顶部当前目录的指示器
-  Widget? buildCurrentCategoryIndicator(BuildContext context);
+  Widget? buildCurrentPathIndicator(BuildContext context);
 
   /// 中间内容的列表布局
   Widget buildBodyList(BuildContext context);
@@ -45,7 +45,7 @@ abstract class PhotoPickBuilderDelegate {
   Widget buildImageItemIndicator(BuildContext context, AssetEntity assetEntity);
 
   /// 当选择图片数量等于[PhotoPickerConfig.maxSelectedCount]时，剩余的图片会覆盖一层颜色
-  Widget buildImageItemDisableCover(BuildContext context, AssetEntity entity);
+  Widget buildImageItemLimitedCover(BuildContext context, AssetEntity entity);
 
   /// 当选中图片后，会覆盖一层颜色
   Widget buildImageItemSelectedCover(BuildContext context, AssetEntity entity);
@@ -59,13 +59,14 @@ abstract class PhotoPickBuilderDelegate {
   });
 
   /// 如果返回值不为空，则主页的底部使用该布局显示，否则使用[buildBottomPanel]显示
+  /// 如果主页想不显示底部布局，设置[PhotoPickerConfig.onlyShowPreviewBottomPanel]为true即可
   Widget? buildRootBottomPanel(BuildContext context);
 
   /// 选择目录列表布局
-  Widget buildCategoryList(BuildContext context, bool switching);
+  Widget buildPathList(BuildContext context, bool switching);
 
   /// 选择目录列表的子布局
-  Widget buildCategoryListItem(BuildContext context, int index);
+  Widget buildPathListItem(BuildContext context, int index);
 
   /// 你懂的，入口
   Widget build(BuildContext context);
@@ -74,7 +75,7 @@ abstract class PhotoPickBuilderDelegate {
   Widget buildStatusBar({required BuildContext context, required Widget child});
 
   /// 查看图片顶部的布局
-  Widget? buildViewerTopWidget(
+  Widget? buildPreviewTopWidget(
     BuildContext context,
     Function backFunc,
     Function selectFunc,
@@ -95,6 +96,7 @@ abstract class PhotoPickBuilderDelegate {
     Function(AssetEntity item)? selectFunc,
   });
 
+  /// 只允许访问部分相片权限提示，内嵌在body中的
   Widget buildPermissionLimited(BuildContext context);
 }
 
@@ -119,7 +121,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
       child: Stack(
         children: [
           buildBack(context),
-          Align(child: buildCurrentCategory(context)),
+          Align(child: buildCurrentPath(context)),
         ],
       ),
     );
@@ -259,7 +261,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   @override
-  Widget buildCategoryList(BuildContext context, bool switching) {
+  Widget buildPathList(BuildContext context, bool switching) {
     return AnimatedAlign(
       duration: const Duration(milliseconds: 200),
       alignment: Alignment.bottomCenter,
@@ -278,7 +280,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             child: ListView.builder(
               padding: const EdgeInsets.only(top: 12),
               itemBuilder: (context, index) {
-                return buildCategoryListItem(context, index);
+                return buildPathListItem(context, index);
               },
               physics: const BouncingScrollPhysics(),
               itemCount: controller.assetPathFirstPhotoThumbMap.length,
@@ -290,7 +292,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   @override
-  Widget buildCategoryListItem(BuildContext context, int index) {
+  Widget buildPathListItem(BuildContext context, int index) {
     final entries = controller.assetPathFirstPhotoThumbMap[index];
     final path = entries[0];
     final data = entries[1];
@@ -346,14 +348,14 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   @override
-  Widget buildCurrentCategory(BuildContext context) {
+  Widget buildCurrentPath(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: controller.pathNotifier,
       builder: (BuildContext context, AssetPathEntity? value, Widget? child) {
         if (value == null) {
           return const SizedBox.shrink();
         }
-        final indicator = buildCurrentCategoryIndicator(context);
+        final indicator = buildCurrentPathIndicator(context);
         return GestureDetector(
           onTap: () {
             controller.switchingPath.value = !controller.switchingPath.value;
@@ -427,7 +429,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             child: buildVideoItemIndicator(context, assetEntity),
           ),
           Positioned.fill(
-            child: buildImageItemDisableCover(context, assetEntity),
+            child: buildImageItemLimitedCover(context, assetEntity),
           ),
         ],
       ),
@@ -524,7 +526,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
               ValueListenableBuilder(
                 valueListenable: controller.switchingPath,
                 builder: (BuildContext context, bool value, Widget? child) {
-                  return buildCategoryList(context, value);
+                  return buildPathList(context, value);
                 },
               )
             ],
@@ -579,7 +581,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   @override
-  Widget? buildViewerTopWidget(
+  Widget? buildPreviewTopWidget(
     BuildContext context,
     Function backFunc,
     Function selectFunc,
@@ -589,7 +591,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   @override
-  Widget buildImageItemDisableCover(BuildContext context, AssetEntity entity) {
+  Widget buildImageItemLimitedCover(BuildContext context, AssetEntity entity) {
     return ValueListenableBuilder(
       builder: (context, bool value, Widget? child) {
         if (!value) {
@@ -597,7 +599,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
         }
         if (!controller.selectedAssetList.value.contains(entity)) {
           return Container(
-            color: config.disableCoverColor ?? Colors.black.withOpacity(0.8),
+            color: config.limitedCoverColor ?? Colors.black.withOpacity(0.8),
           );
         }
         return const SizedBox.shrink();
@@ -847,7 +849,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   @override
-  Widget? buildCurrentCategoryIndicator(BuildContext context) {
+  Widget? buildCurrentPathIndicator(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: controller.switchingPath,
       builder: (BuildContext context, bool value, Widget? child) {
@@ -869,7 +871,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
       context: context,
       controller: controller,
       currentEntity: item,
-      topWidget: (backFunc, selectFunc, notifier) => buildViewerTopWidget(
+      topWidget: (backFunc, selectFunc, notifier) => buildPreviewTopWidget(
         context,
         backFunc,
         selectFunc,

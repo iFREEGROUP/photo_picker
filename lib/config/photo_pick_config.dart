@@ -12,7 +12,7 @@ class PhotoPickerConfig {
     this.perPageSize = 200,
     this.thumbPhotoSize = 200,
     this.maxSelectedCount = 9,
-    this.disableCoverColor,
+    this.limitedCoverColor,
     this.selectedCoverColor,
     this.requestType = RequestType.image,
     this.hasAll = true,
@@ -52,7 +52,7 @@ class PhotoPickerConfig {
   final int maxSelectedCount;
 
   /// 选择上限后的图片蒙板颜色
-  final Color? disableCoverColor;
+  final Color? limitedCoverColor;
 
   /// 选中图片所覆盖的颜色
   final Color? selectedCoverColor;
@@ -84,4 +84,53 @@ class PhotoPickerConfig {
   /// 排序目录的代理，可操作删除等
   SortPathDelegate get getPhotoSortPathDelegate =>
       photoSortPathDelegate ?? SortPathDelegate.defaultDelegate;
+
+  PhotoPickerConfig copyWith({
+    Color? backgroundColor,
+    int? crossAxisCount,
+    double? mainAxisSpacing,
+    double? crossAxisSpacing,
+    int? perPageSize,
+    int? thumbPhotoSize,
+    int? maxSelectedCount,
+    Color? limitedCoverColor,
+    Color? selectedCoverColor,
+    RequestType? requestType,
+    bool? hasAll,
+    bool? onlyAll,
+    FilterOptionGroup? filterOption,
+    PhotoNameDelegate? photoNameDelegate,
+    SortPathDelegate? photoSortPathDelegate,
+    bool? canPreview,
+    Curve? pageTransitionCurves,
+    Duration? pageTransitionDuration,
+    bool? onlyShowPreviewBottomPanel,
+    List<AssetEntity>? selectedAssets,
+  }) {
+    return PhotoPickerConfig(
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      crossAxisCount: crossAxisCount ?? this.crossAxisCount,
+      mainAxisSpacing: mainAxisSpacing ?? this.mainAxisSpacing,
+      crossAxisSpacing: crossAxisSpacing ?? this.crossAxisSpacing,
+      perPageSize: perPageSize ?? this.perPageSize,
+      thumbPhotoSize: thumbPhotoSize ?? this.thumbPhotoSize,
+      maxSelectedCount: maxSelectedCount ?? this.maxSelectedCount,
+      requestType: requestType ?? this.requestType,
+      limitedCoverColor: limitedCoverColor ?? this.limitedCoverColor,
+      selectedCoverColor: selectedCoverColor ?? this.selectedCoverColor,
+      hasAll: hasAll ?? this.hasAll,
+      onlyAll: onlyAll ?? this.onlyAll,
+      filterOption: filterOption ?? this.filterOption,
+      photoNameDelegate: photoNameDelegate ?? this.photoNameDelegate,
+      photoSortPathDelegate:
+          photoSortPathDelegate ?? this.photoSortPathDelegate,
+      canPreview: canPreview ?? this.canPreview,
+      pageTransitionCurves: pageTransitionCurves ?? this.pageTransitionCurves,
+      pageTransitionDuration:
+          pageTransitionDuration ?? this.pageTransitionDuration,
+      onlyShowPreviewBottomPanel:
+          onlyShowPreviewBottomPanel ?? this.onlyShowPreviewBottomPanel,
+      selectedAssets: selectedAssets ?? this.selectedAssets,
+    );
+  }
 }

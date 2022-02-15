@@ -286,7 +286,7 @@ class _PhotoViewState extends State<PhotoViewer>
 
   Widget _buildSlideImages() {
     return ExtendedImageSlidePage(
-      resetPageDuration: const Duration(milliseconds: 200),
+      resetPageDuration: kThemeAnimationDuration,
       slidePageBackgroundHandler: (offset, size) {
         final opacity = offset.dy / (size.height / 2.0);
         final result = min(1.0, max(1.0 - opacity, 0.0));
