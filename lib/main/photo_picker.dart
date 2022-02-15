@@ -9,15 +9,17 @@ class PhotoPicker {
   static void pick({
     required BuildContext context,
     PhotoPickerConfig? config,
+    PhotoPickBuilderDelegate? builderDelegate,
   }) async {
     config ??= PhotoPickerConfig(requestType: RequestType.image);
+    builderDelegate ??= DefaultPhotoPickerBuilder();
     if (config.requestType != RequestType.image) {
       throw Exception('目前只支持选择图片，后续开放其他格式的选项');
     }
     Navigator.of(context).push(
       BottomUpPageRoute(
         builder: PhotoPickerWidget(
-          builderDelegate: DefaultPhotoPickerBuilder(),
+          builderDelegate: builderDelegate,
           config: config,
         ),
         transitionCurve: config.pageTransitionCurves,
