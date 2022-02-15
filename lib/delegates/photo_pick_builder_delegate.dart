@@ -74,6 +74,7 @@ abstract class PhotoPickBuilderDelegate {
     BuildContext context,
     Function backFunc,
     Function selectFunc,
+    ValueNotifier<int> currentIndexNotifier,
   );
 
   /// 底部所选图片列表
@@ -368,10 +369,11 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
           context: context,
           controller: controller,
           currentEntity: assetEntity,
-          topWidget: (backFunc, selectFunc) => buildViewerTopWidget(
+          topWidget: (backFunc, selectFunc, notifier) => buildViewerTopWidget(
             context,
             backFunc,
             selectFunc,
+            notifier,
           ),
           bottomWidget: buildBottomPanel(context),
         );
@@ -563,6 +565,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
     BuildContext context,
     Function backFunc,
     Function selectFunc,
+    ValueNotifier<int> currentIndexNotifier,
   ) {
     return null;
   }
@@ -626,10 +629,11 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
           context: context,
           controller: controller,
           currentEntity: item,
-          topWidget: (backFunc, selectFunc) => buildViewerTopWidget(
+          topWidget: (backFunc, selectFunc, notifier) => buildViewerTopWidget(
             context,
             backFunc,
             selectFunc,
+            notifier,
           ),
           bottomWidget: buildBottomPanel(context),
         );

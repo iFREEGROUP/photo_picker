@@ -20,8 +20,9 @@ class PhotoViewer extends StatefulWidget {
   final AssetEntity currentEntity;
   final PhotoPickController controller;
   final Widget? Function(
-    Function clickBackListener,
-    Function clickSelectListener,
+    Function() clickBackListener,
+    Function() clickSelectListener,
+    ValueNotifier<int> currentIndexNotifier,
   )? topWidget;
   final Widget? bottomWidget;
   final Color backgroundColor;
@@ -37,8 +38,9 @@ class PhotoViewer extends StatefulWidget {
     required PhotoPickController controller,
     required AssetEntity currentEntity,
     Widget? Function(
-      Function clickBackListener,
-      Function clickSelectListener,
+      Function() clickBackListener,
+      Function() clickSelectListener,
+      ValueNotifier<int> currentIndexNotifier,
     )?
         topWidget,
     Widget? bottomWidget,
@@ -99,7 +101,7 @@ class _PhotoViewState extends State<PhotoViewer>
   Function()? _doubleClickListener;
 
   /// 当前的选中的位置
-  late ValueNotifier currentIndex = ValueNotifier(
+  late ValueNotifier<int> currentIndex = ValueNotifier(
     widget.controller.assetEntityList.value!.indexOf(widget.currentEntity),
   );
 
@@ -157,8 +159,9 @@ class _PhotoViewState extends State<PhotoViewer>
   Widget _buildTopWidget(
     BuildContext context,
     Widget? Function(
-      Function clickBackListener,
-      Function selectedListener,
+      Function() clickBackListener,
+      Function() selectedListener,
+      ValueNotifier<int> currentIndexNotifier,
     )?
         topWidget,
   ) {
@@ -173,13 +176,17 @@ class _PhotoViewState extends State<PhotoViewer>
           offset: value ? Offset.zero : const Offset(0, -1),
         );
       },
-      child: topWidget?.call(() {
-            slidePageKey.currentState?.popPage();
-            _jump2OriginPosition();
-            Navigator.of(context).maybePop();
-          }, () {
-            widget.controller.selectAsset(currentEntity);
-          }) ??
+      child: topWidget?.call(
+            () {
+              slidePageKey.currentState?.popPage();
+              _jump2OriginPosition();
+              Navigator.of(context).maybePop();
+            },
+            () {
+              widget.controller.selectAsset(currentEntity);
+            },
+            currentIndex,
+          ) ??
           Container(
             height: kToolbarHeight + statusBarHeight,
             color: Colors.black,
