@@ -24,7 +24,7 @@ class PhotoViewer extends StatefulWidget {
     Function() clickSelectListener,
     ValueNotifier<int> currentIndexNotifier,
   )? topWidget;
-  final Widget? bottomWidget;
+  final Widget? Function(Function(AssetEntity item) selectFunc)? bottomWidget;
   final Color backgroundColor;
   final Function(int index)? currentSelectedChangedListener;
 
@@ -43,7 +43,7 @@ class PhotoViewer extends StatefulWidget {
       ValueNotifier<int> currentIndexNotifier,
     )?
         topWidget,
-    Widget? bottomWidget,
+    Widget? Function(Function(AssetEntity item) selectFunc)? bottomWidget,
     Color? backgroundColor,
     Function(int index)? currentSelectedChangedListener,
   }) {
@@ -247,7 +247,10 @@ class _PhotoViewState extends State<PhotoViewer>
     );
   }
 
-  Widget _buildBottomWidget(BuildContext context, Widget? child) {
+  Widget _buildBottomWidget(
+    BuildContext context,
+    Widget? Function(Function(AssetEntity entity) selectFunc)? child,
+  ) {
     return ValueListenableBuilder(
       valueListenable: showMenu,
       builder: (BuildContext context, bool value, Widget? child) {
@@ -258,7 +261,23 @@ class _PhotoViewState extends State<PhotoViewer>
           child: child ?? const SizedBox.shrink(),
         );
       },
-      child: child,
+      child: child?.call((item) {
+        final dataList = widget.controller.assetEntityList.value!;
+        final index = dataList.indexOf(item);
+        if (index == -1 || index >= dataList.length) {
+          return;
+        }
+        var animate = (index - currentIndex.value).abs() < 5;
+        if (animate) {
+          pageController.animateToPage(
+            index,
+            duration: kThemeAnimationDuration,
+            curve: Curves.easeIn,
+          );
+        } else {
+          pageController.jumpToPage(index);
+        }
+      }),
     );
   }
 

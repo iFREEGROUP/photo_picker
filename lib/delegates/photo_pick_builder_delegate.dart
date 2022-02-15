@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -52,7 +53,10 @@ abstract class PhotoPickBuilderDelegate {
   Widget buildVideoItemIndicator(BuildContext context, AssetEntity entity);
 
   /// 底部布局，可用于显示所选的图片
-  Widget buildBottomPanel(BuildContext context);
+  Widget buildBottomPanel(
+    BuildContext context, {
+    Function(AssetEntity item)? selectFunc,
+  });
 
   /// 如果返回值不为空，则主页的底部使用该布局显示，否则使用[buildBottomPanel]显示
   Widget? buildRootBottomPanel(BuildContext context);
@@ -78,10 +82,18 @@ abstract class PhotoPickBuilderDelegate {
   );
 
   /// 底部所选图片列表
-  Widget buildBottomPanelList(BuildContext context, Set<AssetEntity> value);
+  Widget buildBottomPanelList(
+    BuildContext context,
+    Set<AssetEntity> value, {
+    Function(AssetEntity item)? selectFunc,
+  });
 
   /// 底部所选图片列表子布局
-  Widget buildBottomPanelListItem(BuildContext context, AssetEntity item);
+  Widget buildBottomPanelListItem(
+    BuildContext context,
+    AssetEntity item, {
+    Function(AssetEntity item)? selectFunc,
+  });
 
   Widget buildPermissionLimited(BuildContext context);
 }
@@ -175,7 +187,10 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   @override
-  Widget buildBottomPanel(BuildContext context) {
+  Widget buildBottomPanel(
+    BuildContext context, {
+    Function(AssetEntity item)? selectFunc,
+  }) {
     return ValueListenableBuilder(
       valueListenable: controller.displayBottomWidget,
       builder: (context, bool display, Widget? child) {
@@ -228,7 +243,11 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 ValueListenableBuilder(
                   valueListenable: controller.selectedAssetList,
                   builder: (context, Set<AssetEntity> value, Widget? child) {
-                    return buildBottomPanelList(context, value);
+                    return buildBottomPanelList(
+                      context,
+                      value,
+                      selectFunc: selectFunc,
+                    );
                   },
                 ),
               ],
@@ -604,69 +623,115 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   @override
-  Widget buildBottomPanelList(BuildContext context, Set<AssetEntity> value) {
+  Widget buildBottomPanelList(
+    BuildContext context,
+    Set<AssetEntity> value, {
+    Function(AssetEntity item)? selectFunc,
+  }) {
     return SizedBox(
       height: 60,
-      child: ListView.builder(
+      child: ReorderableListView.builder(
+        physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
-          return buildBottomPanelListItem(context, value.elementAt(index));
+          return buildBottomPanelListItem(
+            context,
+            value.elementAt(index),
+            selectFunc: selectFunc,
+          );
+        },
+        itemCount: value.length,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        proxyDecorator: (child, int index, Animation<double> animation) {
+          return AnimatedBuilder(
+            animation: animation,
+            builder: (BuildContext context, Widget? child) {
+              final animValue = Curves.easeInOut.transform(animation.value);
+              final elevation = lerpDouble(0, 6, animValue)!;
+              return Material(
+                color: Colors.black38,
+                elevation: elevation,
+                child: child,
+              );
+            },
+            child: child,
+          );
+        },
+        onReorder: (int oldIndex, int newIndex) {
+          if (newIndex > controller.selectedAssetList.value.length) {
+            newIndex = controller.selectedAssetList.value.length;
+          }
+          if (oldIndex < newIndex) {
+            newIndex -= 1;
+          }
+          var selectedAssets = List.of(controller.selectedAssetList.value);
+          var asset = selectedAssets.removeAt(oldIndex);
+          selectedAssets.insert(newIndex, asset);
+          controller.selectedAssetList.value = selectedAssets.toSet();
         },
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        physics: const BouncingScrollPhysics(),
-        itemCount: value.length,
       ),
     );
   }
 
   @override
-  Widget buildBottomPanelListItem(BuildContext context, AssetEntity item) {
-    return GestureDetector(
-      onTap: () {
-        toViewer(context, item);
-      },
-      child: Stack(
-        children: [
-          Align(
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: ExtendedImage(
-                image: PhotoAssetImageProvider(item, isOriginal: false),
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Positioned.fill(
-            top: -40,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {
-                  controller.selectAsset(item);
-                },
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: const BoxDecoration(boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      offset: Offset(2, 2),
-                      blurRadius: 20,
-                    ),
-                  ]),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 16,
-                    color: Colors.white,
-                  ),
+  Widget buildBottomPanelListItem(
+    BuildContext context,
+    AssetEntity item, {
+    Function(AssetEntity item)? selectFunc,
+  }) {
+    return Stack(
+      key: ValueKey(item),
+      children: [
+        Align(
+          child: GestureDetector(
+            onTap: () {
+              if (selectFunc != null) {
+                selectFunc.call(item);
+              } else {
+                toViewer(context, item);
+              }
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              child: RepaintBoundary(
+                child: ExtendedImage(
+                  image: PhotoAssetImageProvider(item, isOriginal: false),
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
-          )
-        ],
-      ),
+          ),
+        ),
+        Positioned.fill(
+          top: -40,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () {
+                controller.selectAsset(item);
+              },
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    offset: Offset(2, 2),
+                    blurRadius: 20,
+                  ),
+                ]),
+                child: const Icon(
+                  Icons.close_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        )
+      ],
     );
   }
 
@@ -810,7 +875,10 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
         selectFunc,
         notifier,
       ),
-      bottomWidget: buildBottomPanel(context),
+      bottomWidget: (selectFunc) => buildBottomPanel(
+        context,
+        selectFunc: selectFunc,
+      ),
     );
   }
 }
