@@ -187,7 +187,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                   child: GestureDetector(
                     onTap: () {
                       Navigator.of(context)
-                          .pop(controller.selectedAssetList.value);
+                          .pop(controller.selectedAssetList.value.toList());
                     },
                     child: Container(
                       height: 40,

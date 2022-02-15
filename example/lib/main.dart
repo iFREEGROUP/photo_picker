@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:photo_picker/config/photo_pick_config.dart';
 import 'package:photo_picker/main/photo_picker.dart';
 
 void main() {
@@ -37,8 +37,15 @@ class _MyTestState extends State<_MyTestPage> {
             padding: EdgeInsets.all(8.0),
             child: Text('获取图片'),
           ),
-          onTap: () {
-            PhotoPicker.pick(context: context);
+          onTap: () async {
+            final result = await PhotoPicker.pick(context: context);
+            if (result != null) {
+              debugPrint('result: ${result.length}');
+              await PhotoPicker.pick(
+                context: context,
+                config: PhotoPickerConfig(selectedAssets: result),
+              );
+            }
           },
         ),
       ),

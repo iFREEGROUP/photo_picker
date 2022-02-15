@@ -24,6 +24,7 @@ class PhotoPickerConfig {
     this.pageTransitionCurves = Curves.easeIn,
     this.pageTransitionDuration = const Duration(milliseconds: 300),
     this.onlyShowPreviewBottomPanel = false,
+    this.selectedAssets = const [],
   });
 
   final PhotoNameDelegate? photoNameDelegate;
@@ -58,6 +59,9 @@ class PhotoPickerConfig {
 
   /// 请求图片的类型，如图片、视频、音频等
   final RequestType requestType;
+
+  /// 已经选择了的资源
+  final List<AssetEntity> selectedAssets;
 
   /// see [PhotoManager.getAssetPathList]
   final bool hasAll;

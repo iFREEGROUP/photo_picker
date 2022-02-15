@@ -6,7 +6,7 @@ import 'package:photo_picker/widgets/bottom_up_page_transition.dart';
 import 'package:photo_picker/widgets/photo_picker.dart';
 
 class PhotoPicker {
-  static void pick({
+  static Future<List<AssetEntity>?> pick({
     required BuildContext context,
     PhotoPickerConfig? config,
     PhotoPickBuilderDelegate? builderDelegate,
@@ -16,7 +16,7 @@ class PhotoPicker {
     if (config.requestType != RequestType.image) {
       throw Exception('目前只支持选择图片，后续开放其他格式的选项');
     }
-    Navigator.of(context).push(
+    return Navigator.of(context).push(
       BottomUpPageRoute(
         builder: PhotoPickerWidget(
           builderDelegate: builderDelegate,

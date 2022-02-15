@@ -38,6 +38,11 @@ class PhotoPickController {
   void onInit() async {
     await Future.delayed(config.pageTransitionDuration);
     await checkPhotoPermission();
+    // 已选择的资源
+    for (var element in config.selectedAssets) {
+      selectAsset(element);
+    }
+    // 开始获取数据
     if (isPhotoPermissionGrant) {
       await getAssetsPathList();
       await getPathAssetsList();
