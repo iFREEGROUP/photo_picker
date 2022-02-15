@@ -177,12 +177,12 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   @override
   Widget buildBottomPanel(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: controller.selectedAssetList,
-      builder: (context, Set<AssetEntity> value, Widget? child) {
+      valueListenable: controller.displayBottomWidget,
+      builder: (context, bool display, Widget? child) {
         return AnimatedAlign(
-          duration: const Duration(milliseconds: 200),
+          duration: kThemeAnimationDuration,
           alignment: Alignment.topCenter,
-          heightFactor: value.isNotEmpty ? 1 : 0,
+          heightFactor: display ? 1 : 0,
           child: Container(
             color: Colors.black,
             height: 116 + MediaQuery.of(context).padding.bottom,
@@ -191,35 +191,46 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                UnconstrainedBox(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.of(context)
-                          .pop(controller.selectedAssetList.value.toList());
-                    },
-                    child: Container(
-                      height: 40,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      margin: const EdgeInsets.only(right: 12),
-                      decoration: const BoxDecoration(
-                        color: Colors.deepPurple,
-                        borderRadius: BorderRadius.all(Radius.circular(8)),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '确定(${value.length}/${config.maxSelectedCount})',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          height: 1.2,
+                ValueListenableBuilder(
+                  valueListenable: controller.selectedAssetList,
+                  builder: (context, Set<AssetEntity> value, Widget? child) {
+                    return UnconstrainedBox(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop(
+                            controller.selectedAssetList.value.toList(),
+                          );
+                        },
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          margin: const EdgeInsets.only(right: 12),
+                          decoration: const BoxDecoration(
+                            color: Colors.deepPurple,
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '确定(${value.length}/${config.maxSelectedCount})',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              height: 1.2,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
-                buildBottomPanelList(context, value),
+                ValueListenableBuilder(
+                  valueListenable: controller.selectedAssetList,
+                  builder: (context, Set<AssetEntity> value, Widget? child) {
+                    return buildBottomPanelList(context, value);
+                  },
+                ),
               ],
             ),
           ),
@@ -364,19 +375,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             !controller.selectedAssetList.value.contains(assetEntity)) {
           return;
         }
-        if (!config.canPreview || assetEntity.type != AssetType.image) return;
-        PhotoViewer.openViewer(
-          context: context,
-          controller: controller,
-          currentEntity: assetEntity,
-          topWidget: (backFunc, selectFunc, notifier) => buildViewerTopWidget(
-            context,
-            backFunc,
-            selectFunc,
-            notifier,
-          ),
-          bottomWidget: buildBottomPanel(context),
-        );
+        toViewer(context, assetEntity);
       },
       child: Stack(
         children: [
@@ -624,19 +623,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   Widget buildBottomPanelListItem(BuildContext context, AssetEntity item) {
     return GestureDetector(
       onTap: () {
-        if (!config.canPreview || item.type != AssetType.image) return;
-        PhotoViewer.openViewer(
-          context: context,
-          controller: controller,
-          currentEntity: item,
-          topWidget: (backFunc, selectFunc, notifier) => buildViewerTopWidget(
-            context,
-            backFunc,
-            selectFunc,
-            notifier,
-          ),
-          bottomWidget: buildBottomPanel(context),
-        );
+        toViewer(context, item);
       },
       child: Stack(
         children: [
@@ -808,6 +795,22 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
           ),
         );
       },
+    );
+  }
+
+  void toViewer(BuildContext context, AssetEntity item) {
+    if (!config.canPreview || item.type != AssetType.image) return;
+    PhotoViewer.openViewer(
+      context: context,
+      controller: controller,
+      currentEntity: item,
+      topWidget: (backFunc, selectFunc, notifier) => buildViewerTopWidget(
+        context,
+        backFunc,
+        selectFunc,
+        notifier,
+      ),
+      bottomWidget: buildBottomPanel(context),
     );
   }
 }

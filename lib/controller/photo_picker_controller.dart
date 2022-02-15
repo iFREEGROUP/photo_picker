@@ -35,6 +35,9 @@ class PhotoPickController {
   /// 禁止点击事件
   final ValueNotifier<bool> disableClickListener = ValueNotifier(false);
 
+  /// 默认不展示底部详情按钮
+  final ValueNotifier<bool> displayBottomWidget = ValueNotifier(false);
+
   void onInit() async {
     await Future.delayed(config.pageTransitionDuration);
     await checkPhotoPermission();
@@ -171,12 +174,23 @@ class PhotoPickController {
     if (oldList.contains(assetEntity)) {
       oldList.remove(assetEntity);
       selectedAssetList.value = <AssetEntity>{...oldList};
+      // 取消禁止点击
       if (disableClickListener.value) {
         disableClickListener.value = false;
       }
+      // 不显示底部详情
+      if (selectedAssetList.value.isEmpty) {
+        displayBottomWidget.value = false;
+      }
     } else {
+      // 已经超限制
       if (selectedAssetList.value.length >= config.maxSelectedCount) return;
       selectedAssetList.value = <AssetEntity>{...oldList}..add(assetEntity);
+      // 显示底部详情
+      if (selectedAssetList.value.length == 1) {
+        displayBottomWidget.value = true;
+      }
+      // 达到最大的上限
       if (selectedAssetList.value.length == config.maxSelectedCount) {
         disableClickListener.value = true;
       }
