@@ -17,7 +17,8 @@ class PhotoPicker {
     Navigator.of(context).push(
       BottomUpPageRoute(
         builder: PhotoPickerWidget(
-          builderDelegate: DefaultPhotoPickerBuilder(config: config),
+          builderDelegate: DefaultPhotoPickerBuilder(),
+          config: config,
         ),
         transitionCurve: config.pageTransitionCurves,
         transitionDuration: config.pageTransitionDuration,

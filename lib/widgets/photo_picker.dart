@@ -2,15 +2,20 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:photo_picker/config/photo_pick_config.dart';
 import 'package:photo_picker/delegates/photo_pick_builder_delegate.dart';
 
 class PhotoPickerWidget extends StatefulWidget {
-  const PhotoPickerWidget({
+  PhotoPickerWidget({
     Key? key,
     required this.builderDelegate,
-  }) : super(key: key);
+    required this.config,
+  }) : super(key: key) {
+    builderDelegate.config = config;
+  }
 
   final PhotoPickBuilderDelegate builderDelegate;
+  final PhotoPickerConfig config;
 
   @override
   State<StatefulWidget> createState() {

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/config/photo_pick_config.dart';
 import 'package:photo_picker/controller/photo_picker_controller.dart';
@@ -9,15 +10,14 @@ import 'package:photo_picker/provider/photo_asset_image_provider.dart';
 import 'package:photo_picker/widgets/photo_viewer.dart';
 
 abstract class PhotoPickBuilderDelegate {
-  PhotoPickBuilderDelegate({
-    required this.config,
-  });
+  PhotoPickBuilderDelegate();
 
   /// 业务控制器
   late final PhotoPickController controller =
       PhotoPickController(config: config)..onInit();
 
-  final PhotoPickerConfig config;
+  /// 配置文件
+  late final PhotoPickerConfig config;
 
   /// 标题栏整个布局
   Widget buildAppbar(BuildContext context);
@@ -75,12 +75,12 @@ abstract class PhotoPickBuilderDelegate {
 
   /// 底部所选图片列表子布局
   Widget buildBottomPanelListItem(BuildContext context, AssetEntity item);
+
+  Widget buildPermissionLimited(BuildContext context);
 }
 
 class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
-  DefaultPhotoPickerBuilder({
-    required PhotoPickerConfig config,
-  }) : super(config: config);
+  DefaultPhotoPickerBuilder();
 
   @override
   Widget buildAppbar(BuildContext context) {
@@ -172,43 +172,49 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
     return ValueListenableBuilder(
       valueListenable: controller.selectedAssetList,
       builder: (context, Set<AssetEntity> value, Widget? child) {
-        return AnimatedContainer(
-          color: Colors.black,
-          height: value.isEmpty ? 0 : 116,
+        return AnimatedAlign(
           duration: const Duration(milliseconds: 200),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const SizedBox(height: 4),
-              UnconstrainedBox(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.of(context)
-                        .pop(controller.selectedAssetList.value);
-                  },
-                  child: Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: const BoxDecoration(
-                      color: Colors.deepPurple,
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '确定(${value.length}/${config.maxSelectedCount})',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        height: 1.2,
+          alignment: Alignment.topCenter,
+          heightFactor: value.isNotEmpty ? 1 : 0,
+          child: Container(
+            color: Colors.black,
+            height: 116 + MediaQuery.of(context).padding.bottom,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                UnconstrainedBox(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.of(context)
+                          .pop(controller.selectedAssetList.value);
+                    },
+                    child: Container(
+                      height: 40,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: const BoxDecoration(
+                        color: Colors.deepPurple,
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '确定(${value.length}/${config.maxSelectedCount})',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          height: 1.2,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              Expanded(child: buildBottomPanelList(context, value)),
-            ],
+                const SizedBox(height: 8),
+                buildBottomPanelList(context, value),
+              ],
+            ),
           ),
         );
       },
@@ -488,6 +494,9 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
               Positioned.fill(
                 child: Column(
                   children: [
+                    value == PermissionState.limited
+                        ? buildPermissionLimited(context)
+                        : const SizedBox.shrink(),
                     Expanded(child: buildBodyList(context)),
                     config.onlyShowPreviewBottomPanel
                         ? const SizedBox.shrink()
@@ -598,14 +607,17 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
 
   @override
   Widget buildBottomPanelList(BuildContext context, Set<AssetEntity> value) {
-    return ListView.builder(
-      itemBuilder: (context, index) {
-        return buildBottomPanelListItem(context, value.elementAt(index));
-      },
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      physics: const BouncingScrollPhysics(),
-      itemCount: value.length,
+    return SizedBox(
+      height: 60,
+      child: ListView.builder(
+        itemBuilder: (context, index) {
+          return buildBottomPanelListItem(context, value.elementAt(index));
+        },
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        physics: const BouncingScrollPhysics(),
+        itemCount: value.length,
+      ),
     );
   }
 
@@ -647,10 +659,17 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 onTap: () {
                   controller.selectAsset(item);
                 },
-                child: const SizedBox(
+                child: Container(
                   width: 24,
                   height: 24,
-                  child: Icon(
+                  decoration: const BoxDecoration(boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      offset: Offset(2, 2),
+                      blurRadius: 20,
+                    ),
+                  ]),
+                  child: const Icon(
                     Icons.close_rounded,
                     size: 16,
                     color: Colors.white,
@@ -710,5 +729,59 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             .toString()
             .padLeft(2, '0');
     return '$minute$separator$second';
+  }
+
+  @override
+  Widget buildPermissionLimited(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        boxShadow: [
+          BoxShadow(
+            color: Color.fromRGBO(170, 166, 170, 0.4), // #AAA6AA66 40%
+            offset: Offset(1, 1),
+            blurRadius: 2,
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              '你只授权了应用访问你的部分资源',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              PhotoManager.openSetting();
+            },
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF6A00FF),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: const Text(
+                '修改权限',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
