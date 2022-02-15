@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/config/photo_pick_config.dart';
 import 'package:photo_picker/controller/photo_picker_controller.dart';
@@ -26,6 +27,9 @@ abstract class PhotoPickBuilderDelegate {
 
   /// 顶部当前的目录
   Widget buildCurrentCategory(BuildContext context);
+
+  /// 顶部当前目录的指示器
+  Widget? buildCurrentCategoryIndicator(BuildContext context);
 
   /// 中间内容的列表布局
   Widget buildBodyList(BuildContext context);
@@ -61,6 +65,9 @@ abstract class PhotoPickBuilderDelegate {
 
   /// 你懂的，入口
   Widget build(BuildContext context);
+
+  /// 状态栏
+  Widget buildStatusBar({required BuildContext context, required Widget child});
 
   /// 查看图片顶部的布局
   Widget? buildViewerTopWidget(
@@ -315,6 +322,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
         if (value == null) {
           return const SizedBox.shrink();
         }
+        final indicator = buildCurrentCategoryIndicator(context);
         return GestureDetector(
           onTap: () {
             controller.switchingPath.value = !controller.switchingPath.value;
@@ -337,22 +345,8 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(
-                  width: 4,
-                ),
-                ValueListenableBuilder(
-                  valueListenable: controller.switchingPath,
-                  builder: (BuildContext context, bool value, Widget? child) {
-                    return Transform.rotate(
-                      angle: value ? pi / 180 : pi,
-                      child: const Icon(
-                        Icons.arrow_drop_up_sharp,
-                        size: 24,
-                        color: Colors.white,
-                      ),
-                    );
-                  },
-                ),
+                if (indicator != null) const SizedBox(width: 4),
+                indicator ?? const SizedBox.shrink(),
               ],
             ),
           ),
@@ -464,20 +458,23 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: config.backgroundColor,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: _buildBody(),
-            top: MediaQuery.of(context).padding.top + kToolbarHeight,
-          ),
-          Positioned(
-            child: buildAppbar(context),
-            left: 0,
-            right: 0,
-          ),
-        ],
+    return buildStatusBar(
+      context: context,
+      child: Scaffold(
+        backgroundColor: config.backgroundColor,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: _buildBody(),
+              top: MediaQuery.of(context).padding.top + kToolbarHeight,
+            ),
+            Positioned(
+              child: buildAppbar(context),
+              left: 0,
+              right: 0,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -781,6 +778,32 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
           )
         ],
       ),
+    );
+  }
+
+  @override
+  Widget buildStatusBar(
+      {required BuildContext context, required Widget child}) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: child,
+    );
+  }
+
+  @override
+  Widget? buildCurrentCategoryIndicator(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: controller.switchingPath,
+      builder: (BuildContext context, bool value, Widget? child) {
+        return Transform.rotate(
+          angle: value ? pi / 180 : pi,
+          child: const Icon(
+            Icons.arrow_drop_up_sharp,
+            size: 24,
+            color: Colors.white,
+          ),
+        );
+      },
     );
   }
 }
