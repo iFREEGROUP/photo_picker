@@ -205,12 +205,12 @@ class PhotoPickController {
     if (!fromBottomPanel &&
         disableClickListener.value &&
         !selectedAssetList.value.contains(assetEntity)) {
-      return false;
+      return true;
     }
     if (!config.canPreview || assetEntity.type != AssetType.image) {
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   /// 单选类型时，点击图片的事件处理
