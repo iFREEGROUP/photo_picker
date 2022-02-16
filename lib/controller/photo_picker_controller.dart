@@ -196,4 +196,58 @@ class PhotoPickController {
       }
     }
   }
+
+  /// 是否允许点击预览图片
+  bool notAllowPreviewImage(
+    AssetEntity assetEntity, {
+    bool fromBottomPanel = false,
+  }) {
+    if (!fromBottomPanel &&
+        disableClickListener.value &&
+        !selectedAssetList.value.contains(assetEntity)) {
+      return false;
+    }
+    if (!config.canPreview || assetEntity.type != AssetType.image) {
+      return false;
+    }
+    return true;
+  }
+
+  /// 单选类型时，点击图片的事件处理
+  void singleItemClick(
+    BuildContext context,
+    AssetEntity assetEntity, {
+    Function()? toViewer,
+    bool fromPreview = false,
+  }) async {
+    if (!config.canPreview || fromPreview) {
+      var result = await config.singleBackFunc?.call(assetEntity, (result) async {
+        // 当await外面的result为true时会执行这这里的方法体，此时的result是dynamic类型
+        if (fromPreview) {
+          Navigator.of(context).pop();
+          await Future.delayed(const Duration(milliseconds: 200));
+        }
+        Navigator.of(config.key.currentContext!).pop(result);
+      });
+      // result == true表示上面的方法体已经处理过了
+      if (result == true) {
+        return;
+      }
+      // result == false表示外面有处理，但没结果
+      if (result == false) {
+        if (fromPreview) {
+          Navigator.of(context).pop();
+        }
+        return;
+      }
+      // 外面没有处理任何东西
+      if (fromPreview) {
+        Navigator.of(context).pop();
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
+      Navigator.of(config.key.currentContext!).pop(assetEntity);
+    } else {
+      toViewer?.call();
+    }
+  }
 }

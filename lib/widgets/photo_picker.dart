@@ -7,10 +7,13 @@ import 'package:photo_picker/delegates/photo_pick_builder_delegate.dart';
 
 class PhotoPickerWidget extends StatefulWidget {
   PhotoPickerWidget({
-    Key? key,
+    GlobalKey<PhotoPickerWidgetState>? key,
     required this.builderDelegate,
     required this.config,
-  }) : super(key: key) {
+  }) : super(key: key ?? config.key) {
+    if (key != null) {
+      config.key = key;
+    }
     builderDelegate.config = config;
   }
 

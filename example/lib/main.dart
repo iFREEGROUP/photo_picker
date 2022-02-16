@@ -38,14 +38,20 @@ class _MyTestState extends State<_MyTestPage> {
             child: Text('获取图片'),
           ),
           onTap: () async {
-            final result = await PhotoPicker.pick(context: context);
-            if (result != null) {
-              debugPrint('result: ${result.length}');
-              await PhotoPicker.pick(
-                context: context,
-                config: PhotoPickerConfig(selectedAssets: result),
-              );
-            }
+            // final result = await PhotoPicker.pick(
+            //   context: context,
+            //   config: PhotoPickerConfig(),
+            // );
+
+            PhotoPicker.singlePick(
+              context: context,
+              config: PhotoPickerConfig(canPreview: true),
+              selectedFunc: (assetEntity) async {
+                debugPrint('我选择了${assetEntity.id}的图片');
+                await Future.delayed(const Duration(milliseconds: 2000));
+                debugPrint('倒计时完成');
+              },
+            );
           },
         ),
       ),

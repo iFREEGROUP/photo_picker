@@ -3,6 +3,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/delegates/photo_rename_delegate.dart';
 import 'package:photo_picker/delegates/photo_sort_path_delegate.dart';
 import 'package:photo_picker/delegates/photo_text_delegate.dart';
+import 'package:photo_picker/widgets/photo_picker.dart';
 
 class PhotoPickerConfig {
   PhotoPickerConfig({
@@ -27,11 +28,16 @@ class PhotoPickerConfig {
     this.pageTransitionDuration = const Duration(milliseconds: 300),
     this.onlyShowPreviewBottomPanel = false,
     this.selectedAssets = const [],
+    this.singleType = false,
+    this.singleBackFunc,
   });
 
   PhotoNameDelegate? photoNameDelegate;
   SortPathDelegate? photoSortPathDelegate;
   PhotoTextDelegate? photoTextDelegate;
+
+  /// key
+  var key = GlobalKey<PhotoPickerWidgetState>();
 
   /// 整个布局的背景颜色
   final Color backgroundColor;
@@ -80,6 +86,15 @@ class PhotoPickerConfig {
   /// 只显示预览时底部的容器，在主页不显示
   final bool onlyShowPreviewBottomPanel;
 
+  /// 单选模式，没有右上角的圈圈和选择后的覆盖层
+  final bool singleType;
+
+  /// 单选模式，选中后是否立马退出页面返回数据(默认)，可选返回false后主动调用backFunc关闭该页面
+  final Future<bool> Function(
+    AssetEntity item,
+    Function(dynamic result) backFunc,
+  )? singleBackFunc;
+
   /// 重命名目录的代理
   PhotoNameDelegate get getPhotoNameDelegate =>
       photoNameDelegate ??= PhotoNameDelegate.defaultPhotoNameDelegate;
@@ -114,6 +129,12 @@ class PhotoPickerConfig {
     Duration? pageTransitionDuration,
     bool? onlyShowPreviewBottomPanel,
     List<AssetEntity>? selectedAssets,
+    bool? singleType,
+    Future<bool> Function(
+      AssetEntity item,
+      Function(dynamic result) backFunc,
+    )?
+        singleBackFunc,
   }) {
     return PhotoPickerConfig(
       backgroundColor: backgroundColor ?? this.backgroundColor,
@@ -140,6 +161,8 @@ class PhotoPickerConfig {
       onlyShowPreviewBottomPanel:
           onlyShowPreviewBottomPanel ?? this.onlyShowPreviewBottomPanel,
       selectedAssets: selectedAssets ?? this.selectedAssets,
+      singleType: singleType ?? this.singleType,
+      singleBackFunc: singleBackFunc ?? this.singleBackFunc,
     );
   }
 }

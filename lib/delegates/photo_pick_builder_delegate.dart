@@ -41,6 +41,9 @@ abstract class PhotoPickBuilderDelegate {
   /// 列表图片的子布局
   Widget buildListImageItem(BuildContext context, AssetEntity assetEntity);
 
+  /// 单选模式的子布局
+  Widget buildListImageSingleItem(BuildContext context, AssetEntity item);
+
   /// 列表图片右上角的指示器
   Widget buildImageItemIndicator(BuildContext context, AssetEntity assetEntity);
 
@@ -390,10 +393,12 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
 
   @override
   Widget buildListImageItem(BuildContext context, AssetEntity assetEntity) {
+    if (config.singleType) {
+      return buildListImageSingleItem(context, assetEntity);
+    }
     return GestureDetector(
       onTap: () {
-        if (controller.disableClickListener.value &&
-            !controller.selectedAssetList.value.contains(assetEntity)) {
+        if (controller.notAllowPreviewImage(assetEntity)) {
           return;
         }
         toViewer(context, assetEntity);
@@ -690,6 +695,10 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
               if (selectFunc != null) {
                 selectFunc.call(item);
               } else {
+                if (controller.notAllowPreviewImage(item,
+                    fromBottomPanel: true)) {
+                  return;
+                }
                 toViewer(context, item);
               }
             },
@@ -866,7 +875,6 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }
 
   void toViewer(BuildContext context, AssetEntity item) {
-    if (!config.canPreview || item.type != AssetType.image) return;
     PhotoViewer.openViewer(
       context: context,
       controller: controller,
@@ -877,10 +885,34 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
         selectFunc,
         notifier,
       ),
-      bottomWidget: (selectFunc) => buildBottomPanel(
-        context,
-        selectFunc: selectFunc,
+      bottomWidget: (selectFunc) => config.singleType
+          ? null
+          : buildBottomPanel(context, selectFunc: selectFunc),
+    );
+  }
+
+  @override
+  Widget buildListImageSingleItem(BuildContext context, AssetEntity item) {
+    final image = Image(
+      image: PhotoAssetImageProvider(
+        item,
+        isOriginal: false,
+        thumbSize: [
+          config.thumbPhotoSize,
+          config.thumbPhotoSize,
+        ],
       ),
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.cover,
+    );
+    return GestureDetector(
+      onTap: () async {
+        controller.singleItemClick(context, item, toViewer: () {
+          toViewer(context, item);
+        });
+      },
+      child: config.canPreview ? Hero(tag: item.id, child: image) : image,
     );
   }
 }

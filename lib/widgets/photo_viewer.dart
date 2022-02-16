@@ -105,6 +105,9 @@ class _PhotoViewState extends State<PhotoViewer>
     widget.controller.assetEntityList.value!.indexOf(widget.currentEntity),
   );
 
+  /// 取消hero动画
+  var _cancelHeroAnimation = false;
+
   @override
   void dispose() {
     if (_doubleClickListener != null) {
@@ -212,34 +215,68 @@ class _PhotoViewState extends State<PhotoViewer>
                 const Spacer(),
                 GestureDetector(
                   onTap: () {
-                    widget.controller.selectAsset(currentEntity);
+                    if (widget.controller.config.singleType) {
+                      setState(() {
+                        _cancelHeroAnimation = true;
+                      });
+                      widget.controller.singleItemClick(
+                        context,
+                        currentEntity,
+                        fromPreview: true,
+                      );
+                    } else {
+                      widget.controller.selectAsset(currentEntity);
+                    }
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: ValueListenableBuilder(
-                      valueListenable: widget.controller.selectedAssetList,
-                      builder: (context, _, child) {
-                        return ValueListenableBuilder(
-                          valueListenable: currentIndex,
-                          builder: (context, _, child) {
-                            if (widget.controller.selectedAssetList.value
-                                .contains(currentEntity)) {
-                              return const Icon(
-                                Icons.check_circle_rounded,
-                                size: 24,
-                                color: Colors.white,
-                              );
-                            }
-                            return const Icon(
-                              Icons.radio_button_unchecked,
-                              size: 24,
+                  child: widget.controller.config.singleType
+                      ? Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          margin: const EdgeInsets.only(right: 16),
+                          decoration: const BoxDecoration(
+                            color: Colors.deepPurple,
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            widget.controller.config
+                                .getPhotoTextDelegate(context)
+                                .confirm,
+                            style: const TextStyle(
                               color: Colors.white,
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              height: 1.2,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: ValueListenableBuilder(
+                            valueListenable:
+                                widget.controller.selectedAssetList,
+                            builder: (context, _, child) {
+                              return ValueListenableBuilder(
+                                valueListenable: currentIndex,
+                                builder: (context, _, child) {
+                                  if (widget.controller.selectedAssetList.value
+                                      .contains(currentEntity)) {
+                                    return const Icon(
+                                      Icons.check_circle_rounded,
+                                      size: 24,
+                                      color: Colors.white,
+                                    );
+                                  }
+                                  return const Icon(
+                                    Icons.radio_button_unchecked,
+                                    size: 24,
+                                    color: Colors.white,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
                 )
               ],
             ),
@@ -323,6 +360,9 @@ class _PhotoViewState extends State<PhotoViewer>
 
   Widget _buildItemWidget(int index) {
     final item = widget.controller.assetEntityList.value![index];
+    if (_cancelHeroAnimation) {
+      return _buildImageWidget(item);
+    }
     return Hero(
       tag: item.id,
       child: _buildImageWidget(item),
