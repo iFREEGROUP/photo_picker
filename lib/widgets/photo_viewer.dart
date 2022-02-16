@@ -24,7 +24,10 @@ class PhotoViewer extends StatefulWidget {
     Function() clickSelectListener,
     ValueNotifier<int> currentIndexNotifier,
   )? topWidget;
-  final Widget? Function(Function(AssetEntity item) selectFunc)? bottomWidget;
+  final Widget? Function(
+    Function(AssetEntity item) selectFunc,
+    Function() cancelAnimateFunc,
+  )? bottomWidget;
   final Color backgroundColor;
   final Function(int index)? currentSelectedChangedListener;
 
@@ -43,7 +46,11 @@ class PhotoViewer extends StatefulWidget {
       ValueNotifier<int> currentIndexNotifier,
     )?
         topWidget,
-    Widget? Function(Function(AssetEntity item) selectFunc)? bottomWidget,
+    Widget? Function(
+      Function(AssetEntity item) selectFunc,
+      Function() cancelAnimateFunc,
+    )?
+        bottomWidget,
     Color? backgroundColor,
     Function(int index)? currentSelectedChangedListener,
   }) {
@@ -286,7 +293,11 @@ class _PhotoViewState extends State<PhotoViewer>
 
   Widget _buildBottomWidget(
     BuildContext context,
-    Widget? Function(Function(AssetEntity entity) selectFunc)? child,
+    Widget? Function(
+      Function(AssetEntity entity) selectFunc,
+      Function() cancelAnimateFunc,
+    )?
+        child,
   ) {
     return ValueListenableBuilder(
       valueListenable: showMenu,
@@ -314,6 +325,10 @@ class _PhotoViewState extends State<PhotoViewer>
         } else {
           pageController.jumpToPage(index);
         }
+      }, () {
+        setState(() {
+          _cancelHeroAnimation = true;
+        });
       }),
     );
   }

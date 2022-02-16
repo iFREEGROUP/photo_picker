@@ -59,6 +59,7 @@ abstract class PhotoPickBuilderDelegate {
   Widget buildBottomPanel(
     BuildContext context, {
     Function(AssetEntity item)? selectFunc,
+    Function()? cancelAnimateFunc,
   });
 
   /// 如果返回值不为空，则主页的底部使用该布局显示，否则使用[buildBottomPanel]显示
@@ -195,6 +196,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   Widget buildBottomPanel(
     BuildContext context, {
     Function(AssetEntity item)? selectFunc,
+    Function()? cancelAnimateFunc,
   }) {
     return ValueListenableBuilder(
       valueListenable: controller.displayBottomWidget,
@@ -217,8 +219,11 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                     return UnconstrainedBox(
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.of(context).pop(
-                            controller.selectedAssetList.value.toList(),
+                          cancelAnimateFunc?.call();
+                          controller.confirm(
+                            context,
+                            fromPreview: selectFunc != null,
+                            data: controller.selectedAssetList.value.toList(),
                           );
                         },
                         child: Container(
@@ -885,9 +890,13 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
         selectFunc,
         notifier,
       ),
-      bottomWidget: (selectFunc) => config.singleType
+      bottomWidget: (selectFunc, cancelHeroFunc) => config.singleType
           ? null
-          : buildBottomPanel(context, selectFunc: selectFunc),
+          : buildBottomPanel(
+              context,
+              selectFunc: selectFunc,
+              cancelAnimateFunc: cancelHeroFunc,
+            ),
     );
   }
 

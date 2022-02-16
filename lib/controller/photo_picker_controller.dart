@@ -221,13 +221,10 @@ class PhotoPickController {
     bool fromPreview = false,
   }) async {
     if (!config.canPreview || fromPreview) {
-      var result = await config.singleBackFunc?.call(assetEntity, (result) async {
+      var result =
+          await config.singleBackFunc?.call(assetEntity, (result) async {
         // 当await外面的result为true时会执行这这里的方法体，此时的result是dynamic类型
-        if (fromPreview) {
-          Navigator.of(context).pop();
-          await Future.delayed(const Duration(milliseconds: 200));
-        }
-        Navigator.of(config.key.currentContext!).pop(result);
+        confirm(context, fromPreview: fromPreview, data: result);
       });
       // result == true表示上面的方法体已经处理过了
       if (result == true) {
@@ -241,13 +238,22 @@ class PhotoPickController {
         return;
       }
       // 外面没有处理任何东西
-      if (fromPreview) {
-        Navigator.of(context).pop();
-        await Future.delayed(const Duration(milliseconds: 200));
-      }
-      Navigator.of(config.key.currentContext!).pop(assetEntity);
+      confirm(context, fromPreview: fromPreview, data: assetEntity);
     } else {
       toViewer?.call();
     }
+  }
+
+  /// 多选时的确定
+  void confirm(
+    BuildContext context, {
+    bool fromPreview = false,
+    dynamic data,
+  }) async {
+    if (fromPreview) {
+      Navigator.of(context).pop();
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+    Navigator.of(config.key.currentContext!).pop(data);
   }
 }
