@@ -228,7 +228,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            '确定(${value.length}/${config.maxSelectedCount})',
+                            '${config.getPhotoTextDelegate(context).confirm}(${value.length}/${config.maxSelectedCount})',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -441,9 +441,9 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
-          '请允许使用你的相册权限',
-          style: TextStyle(
+        Text(
+          config.getPhotoTextDelegate(context).noPermissionTip,
+          style: const TextStyle(
             fontWeight: FontWeight.w400,
             fontSize: 14,
             height: 20 / 14,
@@ -463,9 +463,9 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
               color: Color(0xFF6A00FF),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
-            child: const Text(
-              '去开启权限',
-              style: TextStyle(
+            child: Text(
+              config.getPhotoTextDelegate(context).openSetting,
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
                 height: 20 / 14,
@@ -803,10 +803,10 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              '你只授权了应用访问你的部分资源',
-              style: TextStyle(
+              config.getPhotoTextDelegate(context).permissionLimitedTip,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: Colors.black,
@@ -824,9 +824,9 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: const Text(
-                '修改权限',
-                style: TextStyle(
+              child: Text(
+                config.getPhotoTextDelegate(context).limitedPermissionAction,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/delegates/photo_rename_delegate.dart';
 import 'package:photo_picker/delegates/photo_sort_path_delegate.dart';
+import 'package:photo_picker/delegates/photo_text_delegate.dart';
 
 class PhotoPickerConfig {
   PhotoPickerConfig({
@@ -20,6 +21,7 @@ class PhotoPickerConfig {
     this.filterOption,
     this.photoNameDelegate,
     this.photoSortPathDelegate,
+    this.photoTextDelegate,
     this.canPreview = true,
     this.pageTransitionCurves = Curves.easeIn,
     this.pageTransitionDuration = const Duration(milliseconds: 300),
@@ -27,8 +29,9 @@ class PhotoPickerConfig {
     this.selectedAssets = const [],
   });
 
-  final PhotoNameDelegate? photoNameDelegate;
-  final SortPathDelegate? photoSortPathDelegate;
+  PhotoNameDelegate? photoNameDelegate;
+  SortPathDelegate? photoSortPathDelegate;
+  PhotoTextDelegate? photoTextDelegate;
 
   /// 整个布局的背景颜色
   final Color backgroundColor;
@@ -79,11 +82,15 @@ class PhotoPickerConfig {
 
   /// 重命名目录的代理
   PhotoNameDelegate get getPhotoNameDelegate =>
-      photoNameDelegate ?? PhotoNameDelegate.defaultPhotoNameDelegate;
+      photoNameDelegate ??= PhotoNameDelegate.defaultPhotoNameDelegate;
 
   /// 排序目录的代理，可操作删除等
   SortPathDelegate get getPhotoSortPathDelegate =>
-      photoSortPathDelegate ?? SortPathDelegate.defaultDelegate;
+      photoSortPathDelegate ??= SortPathDelegate.defaultDelegate;
+
+  /// 所有文案的代理
+  PhotoTextDelegate getPhotoTextDelegate(BuildContext context) =>
+      photoTextDelegate ??= DefaultPhotoTextDelegateImpl(context: context);
 
   PhotoPickerConfig copyWith({
     Color? backgroundColor,
@@ -101,6 +108,7 @@ class PhotoPickerConfig {
     FilterOptionGroup? filterOption,
     PhotoNameDelegate? photoNameDelegate,
     SortPathDelegate? photoSortPathDelegate,
+    PhotoTextDelegate? photoTextDelegate,
     bool? canPreview,
     Curve? pageTransitionCurves,
     Duration? pageTransitionDuration,
@@ -124,6 +132,7 @@ class PhotoPickerConfig {
       photoNameDelegate: photoNameDelegate ?? this.photoNameDelegate,
       photoSortPathDelegate:
           photoSortPathDelegate ?? this.photoSortPathDelegate,
+      photoTextDelegate: photoTextDelegate ?? this.photoTextDelegate,
       canPreview: canPreview ?? this.canPreview,
       pageTransitionCurves: pageTransitionCurves ?? this.pageTransitionCurves,
       pageTransitionDuration:
