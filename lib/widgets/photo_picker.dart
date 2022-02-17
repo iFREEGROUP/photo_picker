@@ -48,13 +48,14 @@ class PhotoPickerWidgetState extends State<PhotoPickerWidget>
     PhotoManager.removeChangeCallback(_photoChangedListener);
     PhotoManager.stopChangeNotify();
     clearMemoryImageCache();
+    widget.builderDelegate.controller.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed && mounted) {
       widget.builderDelegate.controller.onPhotoChangeListener(update: false);
     }
   }

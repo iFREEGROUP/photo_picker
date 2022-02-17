@@ -11,17 +11,17 @@ class PhotoPickController {
   final PhotoPickerConfig config;
 
   /// 当前选择的路径
-  ValueNotifier<AssetPathEntity?> pathNotifier = ValueNotifier(null);
+  final ValueNotifier<AssetPathEntity?> pathNotifier = ValueNotifier(null);
 
   /// 当前选择路径下的所有图片
-  ValueNotifier<List<AssetEntity>?> assetEntityList = ValueNotifier(null);
+  final ValueNotifier<List<AssetEntity>?> assetEntityList = ValueNotifier(null);
 
   /// 相册的权限
-  ValueNotifier<PermissionState> photoPermissionState =
-      ValueNotifier(PermissionState.denied);
+  final ValueNotifier<PermissionState> photoPermissionState =
+      ValueNotifier(PermissionState.authorized);
 
   /// 正在切换路径？（相册）
-  ValueNotifier<bool> switchingPath = ValueNotifier(false);
+  final ValueNotifier<bool> switchingPath = ValueNotifier(false);
 
   /// 当前路径下的图片总数
   int _currentPathTotalItemCount = 0;
@@ -53,6 +53,16 @@ class PhotoPickController {
       await getAssetsPathList();
       await getPathAssetsList();
     }
+  }
+
+  void dispose() {
+    pathNotifier.dispose();
+    assetEntityList.dispose();
+    photoPermissionState.dispose();
+    switchingPath.dispose();
+    selectedAssetList.dispose();
+    disableClickListener.dispose();
+    displayBottomWidget.dispose();
   }
 
   /// 是否授权了相册的权限

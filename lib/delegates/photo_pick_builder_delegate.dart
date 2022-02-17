@@ -152,7 +152,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   @override
   Widget buildBodyList(BuildContext context) {
     return ValueListenableBuilder<List<AssetEntity>?>(
-      builder: (BuildContext context, value, Widget? child) {
+      builder: (BuildContext _, value, Widget? child) {
         if (value == null) {
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -200,7 +200,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   }) {
     return ValueListenableBuilder(
       valueListenable: controller.displayBottomWidget,
-      builder: (context, bool display, Widget? child) {
+      builder: (_, bool display, Widget? child) {
         return AnimatedAlign(
           duration: kThemeAnimationDuration,
           alignment: Alignment.topCenter,
@@ -215,7 +215,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 const SizedBox(height: 8),
                 ValueListenableBuilder(
                   valueListenable: controller.selectedAssetList,
-                  builder: (context, Set<AssetEntity> value, Widget? child) {
+                  builder: (_, Set<AssetEntity> value, Widget? child) {
                     return UnconstrainedBox(
                       child: GestureDetector(
                         onTap: () {
@@ -252,7 +252,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 const SizedBox(height: 8),
                 ValueListenableBuilder(
                   valueListenable: controller.selectedAssetList,
-                  builder: (context, Set<AssetEntity> value, Widget? child) {
+                  builder: (_, Set<AssetEntity> value, Widget? child) {
                     return buildBottomPanelList(
                       context,
                       value,
@@ -359,7 +359,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   Widget buildCurrentPath(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: controller.pathNotifier,
-      builder: (BuildContext context, AssetPathEntity? value, Widget? child) {
+      builder: (BuildContext _, AssetPathEntity? value, Widget? child) {
         if (value == null) {
           return const SizedBox.shrink();
         }
@@ -497,7 +497,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
         body: Stack(
           children: [
             Positioned.fill(
-              child: _buildBody(),
+              child: _buildBody(context),
               top: MediaQuery.of(context).padding.top + kToolbarHeight,
             ),
             Positioned(
@@ -511,10 +511,10 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: controller.photoPermissionState,
-      builder: (BuildContext context, PermissionState value, Widget? child) {
+      builder: (BuildContext _, PermissionState value, Widget? child) {
         if (value == PermissionState.limited ||
             value == PermissionState.authorized) {
           return Stack(
@@ -535,7 +535,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
               ),
               ValueListenableBuilder(
                 valueListenable: controller.switchingPath,
-                builder: (BuildContext context, bool value, Widget? child) {
+                builder: (BuildContext _, bool value, Widget? child) {
                   return buildPathList(context, value);
                 },
               )
@@ -575,7 +575,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
           ),
           child: ValueListenableBuilder(
             valueListenable: controller.selectedAssetList,
-            builder: (context, Set<AssetEntity> value, Widget? child) {
+            builder: (_, Set<AssetEntity> value, Widget? child) {
               return Icon(
                 value.contains(assetEntity)
                     ? Icons.check_circle_rounded
@@ -603,7 +603,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   @override
   Widget buildImageItemLimitedCover(BuildContext context, AssetEntity entity) {
     return ValueListenableBuilder(
-      builder: (context, bool value, Widget? child) {
+      builder: (_, bool value, Widget? child) {
         if (!value) {
           return const SizedBox.shrink();
         }
@@ -621,7 +621,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   @override
   Widget buildImageItemSelectedCover(BuildContext context, AssetEntity entity) {
     return ValueListenableBuilder(
-      builder: (context, Set<AssetEntity> value, Widget? child) {
+      builder: (_, Set<AssetEntity> value, Widget? child) {
         if (value.contains(entity)) {
           return Container(
             color: config.selectedCoverColor ??
@@ -866,7 +866,7 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   Widget? buildCurrentPathIndicator(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: controller.switchingPath,
-      builder: (BuildContext context, bool value, Widget? child) {
+      builder: (BuildContext _, bool value, Widget? child) {
         return Transform.rotate(
           angle: value ? pi / 180 : pi,
           child: const Icon(
