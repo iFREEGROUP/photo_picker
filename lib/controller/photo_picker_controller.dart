@@ -18,7 +18,7 @@ class PhotoPickController {
 
   /// 相册的权限
   ValueNotifier<PermissionState> photoPermissionState =
-      ValueNotifier(PermissionState.authorized);
+      ValueNotifier(PermissionState.denied);
 
   /// 正在切换路径？（相册）
   ValueNotifier<bool> switchingPath = ValueNotifier(false);
@@ -37,6 +37,9 @@ class PhotoPickController {
 
   /// 默认不展示底部详情按钮
   final ValueNotifier<bool> displayBottomWidget = ValueNotifier(false);
+
+  /// 请求权限中
+  var _permissionRequesting = false;
 
   void onInit() async {
     await Future.delayed(config.pageTransitionDuration);
@@ -58,9 +61,11 @@ class PhotoPickController {
       photoPermissionState.value == PermissionState.limited;
 
   Future<void> checkPhotoPermission() async {
+    _permissionRequesting = true;
     await PhotoManager.setIgnorePermissionCheck(false);
     final state = await PhotoManager.requestPermissionExtend();
     photoPermissionState.value = state;
+    _permissionRequesting = false;
   }
 
   Future<void> getAssetsPathList() async {
@@ -113,6 +118,7 @@ class PhotoPickController {
 
   /// 照片发生变更事件，包括没权限从设置页面返回，都会回调这个方法
   void onPhotoChangeListener({bool update = true}) async {
+    if (_permissionRequesting) return;
     await checkPhotoPermission();
     if (!isPhotoPermissionGrant) return;
     if (pathNotifier.value != null) {
