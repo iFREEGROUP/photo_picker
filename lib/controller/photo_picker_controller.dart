@@ -41,6 +41,9 @@ class PhotoPickController {
   /// 请求权限中
   var _permissionRequesting = false;
 
+  /// 所有的目录
+  final List<AssetPathEntity> _allPathList = [];
+
   void onInit() async {
     await Future.delayed(config.pageTransitionDuration);
     await checkPhotoPermission();
@@ -105,6 +108,8 @@ class PhotoPickController {
     config.getPhotoSortPathDelegate.sort(pathList);
 
     if (pathList.isNotEmpty) {
+      _allPathList.clear();
+      _allPathList.addAll(pathList);
       switchAssetPath(pathList.first);
       _cacheFirstThumbFromPathEntity(pathList);
     } else {
@@ -128,12 +133,26 @@ class PhotoPickController {
 
   /// 照片发生变更事件，包括没权限从设置页面返回，都会回调这个方法
   void onPhotoChangeListener({bool update = true}) async {
+    if (switchingPath.value) {
+      switchingPath.value = false;
+    }
     if (_permissionRequesting) return;
     await checkPhotoPermission();
     if (!isPhotoPermissionGrant) return;
     if (pathNotifier.value != null) {
       if (update) {
-        await pathNotifier.value!.refreshPathProperties();
+        for (var path in _allPathList) {
+          await path.refreshPathProperties();
+        }
+        final dataList = await pathNotifier.value!.getAssetListPaged(
+          0,
+          config.perPageSize,
+        );
+        assetEntityList.value = dataList;
+        var old = [...selectedAssetList.value];
+        for (var element in old) {
+          selectAsset(element);
+        }
       }
     } else {
       await getAssetsPathList();

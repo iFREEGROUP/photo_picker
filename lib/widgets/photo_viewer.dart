@@ -115,16 +115,17 @@ class _PhotoViewState extends State<PhotoViewer>
   /// 取消hero动画
   var _cancelHeroAnimation = false;
 
+  /// 图片是否已经加载
+  var _imageLoaded = false;
+
   @override
   void dispose() {
     if (_doubleClickListener != null) {
       _doubleClickAnimation.removeListener(_doubleClickListener!);
     }
-    _doubleClickAnimationController
-      ..stop()
-      ..dispose();
     PhotoManager.clearFileCache();
     currentIndex.dispose();
+    showMenu.dispose();
     super.dispose();
   }
 
@@ -178,7 +179,7 @@ class _PhotoViewState extends State<PhotoViewer>
     final statusBarHeight = MediaQuery.of(context).padding.top;
     return ValueListenableBuilder(
       valueListenable: showMenu,
-      builder: (BuildContext context, bool value, Widget? child) {
+      builder: (BuildContext _, bool value, Widget? child) {
         return AnimatedSlide(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -262,10 +263,10 @@ class _PhotoViewState extends State<PhotoViewer>
                           child: ValueListenableBuilder(
                             valueListenable:
                                 widget.controller.selectedAssetList,
-                            builder: (context, _, child) {
+                            builder: (_, __, child) {
                               return ValueListenableBuilder(
                                 valueListenable: currentIndex,
-                                builder: (context, _, child) {
+                                builder: (_, __, child) {
                                   if (widget.controller.selectedAssetList.value
                                       .contains(currentEntity)) {
                                     return const Icon(
@@ -301,7 +302,7 @@ class _PhotoViewState extends State<PhotoViewer>
   ) {
     return ValueListenableBuilder(
       valueListenable: showMenu,
-      builder: (BuildContext context, bool value, Widget? child) {
+      builder: (BuildContext _, bool value, Widget? child) {
         return AnimatedSlide(
           offset: value ? Offset.zero : const Offset(0, 1),
           duration: const Duration(milliseconds: 300),
@@ -351,12 +352,15 @@ class _PhotoViewState extends State<PhotoViewer>
         return max(1.0 - scale, 0.8);
       },
       slideEndHandler: slideEndHandler,
+      slideOffsetHandler: (offset, {ExtendedImageSlidePageState? state}) {
+        return _imageLoaded ? null : Offset.zero;
+      },
       onSlidingPage: (state) {
         if (!_manual) {
           showMenu.value = state.offset.dy == 0;
         }
       },
-      slideAxis: SlideAxis.vertical,
+      slideAxis: SlideAxis.both,
       key: slidePageKey,
       child: ExtendedImageGesturePageView.builder(
         itemBuilder: (context, index) {
@@ -411,7 +415,7 @@ class _PhotoViewState extends State<PhotoViewer>
         );
         return AnimatedBuilder(
           animation: animation,
-          builder: (BuildContext context, Widget? child) {
+          builder: (BuildContext _, Widget? child) {
             return Transform.translate(
               offset: offsetTween.evaluate(animation),
               child: Transform.scale(
@@ -447,6 +451,7 @@ class _PhotoViewState extends State<PhotoViewer>
           );
         },
         loadStateChanged: (state) {
+          _imageLoaded = state.extendedImageLoadState == LoadState.completed;
           if (state.extendedImageLoadState == LoadState.loading) {
             return const Center(
               child: CircularProgressIndicator(
@@ -456,6 +461,7 @@ class _PhotoViewState extends State<PhotoViewer>
               ),
             );
           }
+          return null;
         },
         // extendedImageGestureKey: gestureKeyList[index],
         onDoubleTap: (state) {

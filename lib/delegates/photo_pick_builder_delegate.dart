@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:extended_image/extended_image.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -71,6 +72,9 @@ abstract class PhotoPickBuilderDelegate {
 
   /// 选择目录列表的子布局
   Widget buildPathListItem(BuildContext context, int index);
+
+  /// 选择目录列表页面的权限提示
+  Widget buildPathListPermissionLimited(BuildContext context);
 
   /// 你懂的，入口
   Widget build(BuildContext context);
@@ -281,18 +285,26 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
         curve: Curves.easeInOut,
         child: Container(
           color: Colors.black,
-          child: MediaQuery.removePadding(
-            context: context,
-            removeTop: true,
-            removeBottom: true,
-            child: ListView.builder(
-              padding: const EdgeInsets.only(top: 12),
-              itemBuilder: (context, index) {
-                return buildPathListItem(context, index);
-              },
-              physics: const BouncingScrollPhysics(),
-              itemCount: controller.assetPathFirstPhotoThumbMap.length,
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              buildPathListPermissionLimited(context),
+              Flexible(
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  removeBottom: true,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(top: 12),
+                    itemBuilder: (context, index) {
+                      return buildPathListItem(context, index);
+                    },
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: controller.assetPathFirstPhotoThumbMap.length,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -410,20 +422,22 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
       },
       child: Stack(
         children: [
-          Hero(
-            tag: assetEntity.id,
-            child: Image(
-              image: PhotoAssetImageProvider(
-                assetEntity,
-                isOriginal: false,
-                thumbSize: [
-                  config.thumbPhotoSize,
-                  config.thumbPhotoSize,
-                ],
+          RepaintBoundary(
+            child: Hero(
+              tag: assetEntity.id,
+              child: Image(
+                image: PhotoAssetImageProvider(
+                  assetEntity,
+                  isOriginal: false,
+                  thumbSize: [
+                    config.thumbPhotoSize,
+                    config.thumbPhotoSize,
+                  ],
+                ),
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
               ),
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.cover,
             ),
           ),
           Positioned.fill(
@@ -923,5 +937,45 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
       },
       child: config.canPreview ? Hero(tag: item.id, child: image) : image,
     );
+  }
+
+  @override
+  Widget buildPathListPermissionLimited(BuildContext context) {
+    return controller.photoPermissionState.value == PermissionState.limited
+        ? Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: config
+                        .getPhotoTextDelegate(context)
+                        .pathPermissionLimitedTip,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      height: 1.2,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  TextSpan(
+                    text: config
+                        .getPhotoTextDelegate(context)
+                        .pathPermissionLimitedAction,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                      color: Colors.grey,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = PhotoManager.presentLimited,
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.left,
+            ),
+          )
+        : const SizedBox.shrink();
   }
 }
