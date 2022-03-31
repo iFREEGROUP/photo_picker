@@ -5,6 +5,8 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:keframe/frame_separate_widget.dart';
+import 'package:keframe/size_cache_widget.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/config/photo_pick_config.dart';
 import 'package:photo_picker/controller/photo_picker_controller.dart';
@@ -129,7 +131,12 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
       child: Stack(
         children: [
           buildBack(context),
-          Align(child: buildCurrentPath(context)),
+          Align(
+              child: Padding(
+            // 让视觉上更居中
+            padding: const EdgeInsets.only(left: 20),
+            child: buildCurrentPath(context),
+          )),
         ],
       ),
     );
@@ -176,19 +183,26 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
           removeTop: true,
           removeBottom: true,
           context: context,
-          child: GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: config.crossAxisCount,
-              mainAxisSpacing: config.mainAxisSpacing,
-              crossAxisSpacing: config.crossAxisSpacing,
+          child: SizeCacheWidget(
+            estimateCount: 100,
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: config.crossAxisCount,
+                mainAxisSpacing: config.mainAxisSpacing,
+                crossAxisSpacing: config.crossAxisSpacing,
+              ),
+              itemBuilder: (context, index) {
+                controller.loadMoreAssetData(index, config.crossAxisCount);
+                final item = value[index];
+                return FrameSeparateWidget(
+                  index: index,
+                  placeHolder: const SizedBox.expand(),
+                  child: buildListImageItem(context, item),
+                );
+              },
+              itemCount: value.length,
+              physics: const BouncingScrollPhysics(),
             ),
-            itemBuilder: (context, index) {
-              controller.loadMoreAssetData(index, config.crossAxisCount);
-              final item = value[index];
-              return buildListImageItem(context, item);
-            },
-            itemCount: value.length,
-            physics: const BouncingScrollPhysics(),
           ),
         );
       },
@@ -437,6 +451,22 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 width: double.infinity,
                 height: double.infinity,
                 fit: BoxFit.cover,
+                frameBuilder: (context, child, frame, wasSynchronousLoaded) {
+                  if (wasSynchronousLoaded) {
+                    return child;
+                  } else {
+                    return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: frame != null
+                          ? child
+                          : const SizedBox(
+                              width: double.infinity,
+                              height: double.infinity,
+                              child: ColoredBox(color: Colors.white38),
+                            ),
+                    );
+                  }
+                },
               ),
             ),
           ),

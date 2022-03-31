@@ -4,20 +4,28 @@ version '1.0-SNAPSHOT'
 buildscript {
     ext.kotlin_version = '1.3.50'
     repositories {
-        google()
-        mavenCentral()
+        // 阿里 central仓和jcenter仓的聚合仓
+        maven { url 'https://maven.aliyun.com/repository/public/' }
+        // 阿里 google
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        // jitpack
+        maven { url "https://jitpack.io" }
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.0'
+        classpath 'com.android.tools.build:gradle:4.2.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
 rootProject.allprojects {
     repositories {
-        google()
-        mavenCentral()
+        // 阿里 central仓和jcenter仓的聚合仓
+        maven { url 'https://maven.aliyun.com/repository/public/' }
+        // 阿里 google
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        // jitpack
+        maven { url "https://jitpack.io" }
     }
 }
 

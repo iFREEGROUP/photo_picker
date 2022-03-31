@@ -54,7 +54,7 @@ class PhotoPickController {
     // 开始获取数据
     if (isPhotoPermissionGrant) {
       await getAssetsPathList();
-      await getPathAssetsList();
+      // await getPathAssetsList();
     }
   }
 
@@ -97,21 +97,49 @@ class PhotoPickController {
     if (config.filterOption != null) {
       options.merge(config.filterOption!);
     }
-    final pathList = await PhotoManager.getAssetPathList(
-      hasAll: config.hasAll,
-      onlyAll: config.onlyAll,
-      type: config.requestType,
-      filterOption: options,
-    );
 
-    // 排序并过滤
-    config.getPhotoSortPathDelegate.sort(pathList);
+    final List<AssetPathEntity> pathList;
+
+    if (config.hasAll) {
+      // 优先取出 "全部", 加速照片显示
+      pathList = await PhotoManager.getAssetPathList(
+        hasAll: config.hasAll,
+        onlyAll: true,
+        type: config.requestType,
+        filterOption: options,
+      );
+
+      if (!config.onlyAll) {
+        // 再去异步获取其他文件夹
+        PhotoManager.getAssetPathList(
+          hasAll: false,
+          onlyAll: false,
+          type: config.requestType,
+          filterOption: options,
+        ).then((value) {
+          config.getPhotoSortPathDelegate.sort(value);
+          _allPathList.addAll(value);
+          _cacheFirstThumbFromPathEntity(_allPathList);
+        });
+      }
+    } else {
+      pathList = await PhotoManager.getAssetPathList(
+        hasAll: false,
+        onlyAll: config.onlyAll,
+        type: config.requestType,
+        filterOption: options,
+      );
+
+      if (pathList.isNotEmpty) {
+        config.getPhotoSortPathDelegate.sort(pathList);
+        _cacheFirstThumbFromPathEntity(pathList);
+      }
+    }
 
     if (pathList.isNotEmpty) {
       _allPathList.clear();
       _allPathList.addAll(pathList);
       switchAssetPath(pathList.first);
-      _cacheFirstThumbFromPathEntity(pathList);
     } else {
       assetEntityList.value = [];
     }
@@ -126,8 +154,10 @@ class PhotoPickController {
       return;
     }
     assetEntityList.value = null;
-    final dataList =
-        await pathNotifier.value!.getAssetListPaged(0, config.perPageSize);
+    final dataList = await pathNotifier.value!.getAssetListPaged(
+      page: 0,
+      size: config.perPageSize,
+    );
     assetEntityList.value = dataList;
   }
 
@@ -142,11 +172,11 @@ class PhotoPickController {
     if (pathNotifier.value != null) {
       if (update) {
         for (var path in _allPathList) {
-          await path.refreshPathProperties();
+          await path.obtainForNewProperties();
         }
         final dataList = await pathNotifier.value!.getAssetListPaged(
-          0,
-          config.perPageSize,
+          page: 0,
+          size: config.perPageSize,
         );
         assetEntityList.value = dataList;
         var old = [...selectedAssetList.value];
@@ -156,7 +186,6 @@ class PhotoPickController {
       }
     } else {
       await getAssetsPathList();
-      await getPathAssetsList();
     }
   }
 
@@ -173,8 +202,8 @@ class PhotoPickController {
         currentIndex == currentPathAssetsLength - crossAxisCount * 4;
     if (loadMore && hasLoadMore) {
       final dataList = await pathNotifier.value!.getAssetListPaged(
-        currentAssetsListPage,
-        config.perPageSize,
+        page: currentAssetsListPage,
+        size: config.perPageSize,
       );
       final oldData = assetEntityList.value ?? [];
       assetEntityList.value = [...oldData, ...dataList];
@@ -188,7 +217,7 @@ class PhotoPickController {
     assetPathFirstPhotoThumbMap.clear();
     for (var element in pathEntity) {
       final assetList = await element.getAssetListRange(start: 0, end: 1);
-      final asset = await assetList.elementAt(0).thumbData;
+      final asset = await assetList.elementAt(0).thumbnailData;
       assetPathFirstPhotoThumbMap.add([element, asset]);
     }
   }
