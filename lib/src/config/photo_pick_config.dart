@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:photo_picker/delegates/photo_rename_delegate.dart';
-import 'package:photo_picker/delegates/photo_sort_path_delegate.dart';
-import 'package:photo_picker/delegates/photo_text_delegate.dart';
-import 'package:photo_picker/widgets/photo_picker.dart';
+import 'package:photo_picker/photo_picker.dart';
 
 class PhotoPickerConfig {
   PhotoPickerConfig({

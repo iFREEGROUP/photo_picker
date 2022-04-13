@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:photo_picker/config/photo_pick_config.dart';
-import 'package:photo_picker/main/photo_picker.dart';
+import 'package:photo_picker/photo_picker.dart';
 
 void main() {
   runApp(const MyApp());

@@ -8,10 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:keframe/frame_separate_widget.dart';
 import 'package:keframe/size_cache_widget.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:photo_picker/config/photo_pick_config.dart';
-import 'package:photo_picker/controller/photo_picker_controller.dart';
-import 'package:photo_picker/provider/photo_asset_image_provider.dart';
-import 'package:photo_picker/widgets/photo_viewer.dart';
+import 'package:photo_picker/photo_picker.dart';
 
 abstract class PhotoPickBuilderDelegate {
   PhotoPickBuilderDelegate();
