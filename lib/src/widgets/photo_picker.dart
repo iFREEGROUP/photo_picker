@@ -2,8 +2,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:photo_picker/config/photo_pick_config.dart';
-import 'package:photo_picker/delegates/photo_pick_builder_delegate.dart';
+import 'package:photo_picker/photo_picker.dart';
 
 class PhotoPickerWidget extends StatefulWidget {
   PhotoPickerWidget({

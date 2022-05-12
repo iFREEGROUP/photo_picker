@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:photo_picker/config/photo_pick_config.dart';
+import 'package:photo_picker/photo_picker.dart';
 
 class PhotoPickController {
   PhotoPickController({required this.config});

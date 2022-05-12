@@ -3,8 +3,7 @@ import 'dart:math';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:photo_picker/controller/photo_picker_controller.dart';
-import 'package:photo_picker/provider/photo_asset_image_provider.dart';
+import 'package:photo_picker/photo_picker.dart';
 
 class PhotoViewer extends StatefulWidget {
   const PhotoViewer({
