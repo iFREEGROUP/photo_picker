@@ -5,8 +5,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:keframe/frame_separate_widget.dart';
-import 'package:keframe/size_cache_widget.dart';
+import 'package:keframe/keframe.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/config/photo_pick_config.dart';
 import 'package:photo_picker/controller/photo_picker_controller.dart';
@@ -451,6 +450,17 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
                 width: double.infinity,
                 height: double.infinity,
                 fit: BoxFit.cover,
+                errorBuilder: (
+                  BuildContext context,
+                  Object error,
+                  StackTrace? stackTrace,
+                ) {
+                  return const Placeholder(
+                    fallbackWidth: double.infinity,
+                    fallbackHeight: double.infinity,
+                    color: Colors.red,
+                  );
+                },
                 frameBuilder: (context, child, frame, wasSynchronousLoaded) {
                   if (wasSynchronousLoaded) {
                     return child;
