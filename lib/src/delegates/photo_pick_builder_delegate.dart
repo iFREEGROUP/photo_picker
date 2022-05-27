@@ -5,8 +5,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:keframe/frame_separate_widget.dart';
-import 'package:keframe/size_cache_widget.dart';
+import 'package:keframe/keframe.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_picker/photo_picker.dart';
 

@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
   photo_manager: ^2.0.6
   extended_image: ^6.0.1
-  keframe: ^2.0.4
+  keframe: ^2.0.6
 
 dev_dependencies:
   flutter_test:
