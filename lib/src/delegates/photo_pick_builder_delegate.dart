@@ -324,8 +324,11 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
   @override
   Widget buildPathListItem(BuildContext context, int index) {
     final entries = controller.assetPathFirstPhotoThumbMap[index];
-    final path = entries[0];
+    final path = entries[0] as AssetPathEntity;
     final data = entries[1];
+    if (data == null) {
+      return const SizedBox.shrink();
+    }
     return GestureDetector(
       onTap: () {
         controller.switchAssetPath(path);
@@ -362,14 +365,23 @@ class DefaultPhotoPickerBuilder extends PhotoPickBuilderDelegate {
             const SizedBox(
               width: 8,
             ),
-            Text(
-              '${path.assetCount}',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF8791AA),
-                height: 18 / 12,
-              ),
+            FutureBuilder<int>(
+              builder: (_, snap) {
+                if (snap.hasData) {
+                  return Text(
+                    '${snap.data ?? 0}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF8791AA),
+                      height: 18 / 12,
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+              initialData: 0,
+              future: path.assetCountAsync,
             ),
           ],
         ),

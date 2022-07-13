@@ -9,7 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  photo_manager: ^2.0.6
+  photo_manager:
+    git:
+      url: https://github.com/lantah-1/flutter_photo_manager.git
   extended_image: ^6.0.1
   keframe: ^2.0.6
 

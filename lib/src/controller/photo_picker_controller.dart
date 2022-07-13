@@ -217,8 +217,12 @@ class PhotoPickController {
     assetPathFirstPhotoThumbMap.clear();
     for (var element in pathEntity) {
       final assetList = await element.getAssetListRange(start: 0, end: 1);
-      final asset = await assetList.elementAt(0).thumbnailData;
-      assetPathFirstPhotoThumbMap.add([element, asset]);
+      if (assetList.isEmpty) {
+        assetPathFirstPhotoThumbMap.add([element, null]);
+      } else {
+        final asset = await assetList.elementAt(0).thumbnailData;
+        assetPathFirstPhotoThumbMap.add([element, asset]);
+      }
     }
   }
 
