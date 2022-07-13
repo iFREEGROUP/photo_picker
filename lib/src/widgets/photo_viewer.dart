@@ -147,7 +147,15 @@ class _PhotoViewState extends State<PhotoViewer>
         backgroundColor: Colors.transparent,
         body: Stack(
           children: [
-            _buildSlideImages(),
+            FutureBuilder<int>(
+              builder: (_, snap) {
+                if (snap.hasData) {
+                  return _buildSlideImages(snap.data ?? 0);
+                }
+                return const SizedBox.shrink();
+              },
+              future: widget.controller.pathNotifier.value!.assetCountAsync,
+            ),
             Positioned(
               left: 0,
               top: 0,
@@ -336,7 +344,7 @@ class _PhotoViewState extends State<PhotoViewer>
   AssetEntity get currentEntity =>
       widget.controller.assetEntityList.value![currentIndex.value];
 
-  Widget _buildSlideImages() {
+  Widget _buildSlideImages(int count) {
     return ExtendedImageSlidePage(
       resetPageDuration: kThemeAnimationDuration,
       slidePageBackgroundHandler: (offset, size) {
@@ -366,7 +374,7 @@ class _PhotoViewState extends State<PhotoViewer>
           return _buildItemWidget(index);
         },
         physics: const BouncingScrollPhysics(),
-        itemCount: widget.controller.pathNotifier.value!.assetCount,
+        itemCount: count,
         controller: pageController,
         onPageChanged: (index) {
           currentIndex.value = index;
