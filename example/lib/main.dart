@@ -37,7 +37,7 @@ class _MyTestState extends State<_MyTestPage> {
             child: Text('获取图片'),
           ),
           onTap: () async {
-            final result = await PhotoPicker.pick(
+            await PhotoPicker.pick(
               context: context,
               config: PhotoPickerConfig(),
             );

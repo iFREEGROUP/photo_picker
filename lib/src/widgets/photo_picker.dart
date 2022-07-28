@@ -34,7 +34,7 @@ class PhotoPickerWidgetState extends State<PhotoPickerWidget>
 
   @override
   void initState() {
-    WidgetsBinding.instance?.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     PhotoManager.setIgnorePermissionCheck(true);
     PhotoManager.addChangeCallback(_photoChangedListener);
     PhotoManager.startChangeNotify();
@@ -43,7 +43,7 @@ class PhotoPickerWidgetState extends State<PhotoPickerWidget>
 
   @override
   void dispose() {
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     PhotoManager.removeChangeCallback(_photoChangedListener);
     PhotoManager.stopChangeNotify();
     clearMemoryImageCache();

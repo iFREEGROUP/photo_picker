@@ -227,11 +227,12 @@ class PhotoPickController {
   }
 
   /// 切换相册目录
-  void switchAssetPath(AssetPathEntity entity) {
-    if (pathNotifier.value?.name == entity.name &&
-        pathNotifier.value?.assetCount == entity.assetCount) return;
+  void switchAssetPath(AssetPathEntity entity) async {
+    var oldCount = await pathNotifier.value?.assetCountAsync;
+    var newCount = await entity.assetCountAsync;
+    if (pathNotifier.value?.name == entity.name && oldCount == newCount) return;
     pathNotifier.value = entity;
-    _currentPathTotalItemCount = entity.assetCount;
+    _currentPathTotalItemCount = newCount;
     switchingPath.value = false;
     getPathAssetsList();
   }
