@@ -2,7 +2,7 @@ group 'com.ifreegroup.flutter.photo_picker'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.3.50'
+    ext.kotlin_version = '1.5.20'
     repositories {
         // 阿里 central仓和jcenter仓的聚合仓
         maven { url 'https://maven.aliyun.com/repository/public/' }
