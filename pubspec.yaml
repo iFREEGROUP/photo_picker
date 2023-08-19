@@ -12,6 +12,7 @@ dependencies:
   photo_manager:
     git:
       url: https://github.com/lantah-1/flutter_photo_manager.git
+      ref: 564ad905e40259da98037161e12843633f42ff0c
   extended_image: ^6.2.1
   keframe: ^3.0.0
 
