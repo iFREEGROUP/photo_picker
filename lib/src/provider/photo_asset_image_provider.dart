@@ -36,9 +36,9 @@ class PhotoAssetImageProvider extends ImageProvider<PhotoAssetImageProvider> {
   ImageFileType get imageFileType => _getType();
 
   @override
-  ImageStreamCompleter load(
+  ImageStreamCompleter loadImage(
     PhotoAssetImageProvider key,
-    DecoderCallback decode,
+    ImageDecoderCallback decode,
   ) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
@@ -59,7 +59,7 @@ class PhotoAssetImageProvider extends ImageProvider<PhotoAssetImageProvider> {
 
   Future<ui.Codec> _loadAsync(
     PhotoAssetImageProvider key,
-    DecoderCallback decode,
+    ImageDecoderCallback decode,
   ) async {
     try {
       assert(key == this);
@@ -96,7 +96,9 @@ class PhotoAssetImageProvider extends ImageProvider<PhotoAssetImageProvider> {
       if (data == null) {
         throw StateError('The data of the entity is null: $entity');
       }
-      return decode(data);
+
+      final buffer = await ui.ImmutableBuffer.fromUint8List(data);
+      return decode(buffer);
     } catch (e) {
       // Depending on where the exception was thrown, the image cache may not
       // have had a chance to track the key in the cache at all.
